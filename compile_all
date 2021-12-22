@@ -1,0 +1,12 @@
+#!/bin/bash
+groups=$(ls -d progetti/*);
+for g in $groups; do
+	printf "%s\n" $g;
+	cp compile32 compile64 compile32omp compile64omp sseutils32.* sseutils64.* $g;
+	cd $g;
+	./compile32
+	./compile64
+	./compile32omp
+	./compile64omp
+	cd ../..;
+done;

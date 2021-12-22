@@ -1,0 +1,10 @@
+#!/bin/bash
+groups=$(ls -d progetti/*);
+for g in $groups; do
+	printf "%s\n" $g;
+	cd $g;
+	find . -type f ! -name "*.*" -delete;
+	rm -fr *[!\(.nasm\|.c\)];
+	rm -fr .[!.]*;
+	cd ../..;
+done;

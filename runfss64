@@ -1,0 +1,7 @@
+#!/bin/bash
+if [[ ! -e sseutils64.o ]]; then nasm -f elf64 sseutils64.nasm; fi;
+nasm -f elf64 fss64.nasm
+gcc -m64 -msse -O0 -no-pie sseutils64.o fss64.o fss64c.c -o fss64c -lm
+pars="";
+for arg; do pars=$pars" "$arg; done;
+./fss64c $pars

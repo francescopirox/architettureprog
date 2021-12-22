@@ -1,0 +1,420 @@
+#!/bin/bash
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#PARAMETRI
+dims=( 8 125 256 );
+nps=( 64 735 768 );
+its=( 250 750 1250 );
+si=( 0.1 0.006 0.003 );
+sv=( 0.0125 0.0008 0.0004 );
+w=( 1.25 0.08 0.04 );
+
+archs=( 32 64 32omp 64omp );
+
+#np:  64 d:   8 si:   0.1 sv: 0.0125 w: 1.25 iters:  250
+#np: 735 d: 125 si: 0.006 sv: 0.0008 w: 0.08 iters:  750
+#np: 768 d: 256 si: 0.003 sv: 0.0004 w: 0.04 iters: 1250
+
+ts=$(date +%H-%M-%S-%d-%m-%Y);
+testname=test/test.$ts.history;
+
+if [[ ! -d test ]]; then
+	mkdir test;
+fi;
+if [[ $# -lt 2 ]]; then
+	printf "USAGE:\n";
+	printf "\t./test_one idGrp timeout [-s] [-d]\n";
+	printf "\t\tidGrp: identificativo del gruppo, eseguibili e soluzioni devono trovarsi in progetti/idGrp\n";
+	printf "\t\ttimeout: timeout in secondi\n";
+	printf "\t\tarch: architettura da testare, 32, 32omp, 64 o 64omp\n";
+	printf "\t\ts: 0 - non silenzioso, 1 - silenzioso\n";
+	printf "\t\td: 0 - non stampa i risultati, 1 - stampa i risultati\n";
+	exit;
+fi;
+
+silent=0;
+if [[ $# -eq 3 ]]; then
+	if [[ $3 == "-s" ]]; then
+		silent=1;
+	elif [[ $# -eq 4 ]]; then
+		if [[ $3 == "-s" ]]; then
+			silent=1;
+		fi;
+	fi;
+fi;
+
+groups=progetti/$1;
+tout=$2;
+
+if [[ ! -d progetti ]]; then
+	printf "La cartella 'progetti' non esiste!\n";
+	exit;
+fi;
+if [[ ! -d progetti/$1 ]]; then
+	printf "La cartella 'progetti/%s' non esiste!\n" $1;
+	exit;
+fi;
+Scurr="";
+S="";
+exec(){
+	kind=$(printf "%s%s" $a "c");
+	arch=$(printf "%s" $a | sed s/omp//g);
+	omp=$(printf "%s" $a | sed s/[^omp]//g);
+	r=$(printf "../../data/rand%s_%s_%s_%s.ds2" $arch $d $np $it);
+	c=$(printf "../../data/coeff%s_%s.ds2" $arch $d);
+	s=$(printf "../../data/sol%s_%s_%s_%s.ds2" $arch $d $np $it);
+	x=$(printf "../../data/x%s_%s_%s.ds2" $arch $d $np);
+	xh=$(printf "xh%s_%s_%s_%s.ds2" $arch $d $np $it);
+
+	found=0;
+	if [[ -f $r ]]; then
+		if [[ -f $c ]]; then
+			if [[ -f $s ]]; then
+				if [[ -f $x ]]; then
+					found=1;
+				else
+					printf "FILE $x not found!\n";
+				fi;
+			else
+				printf "FILE $s not found!\n";
+			fi;
+		else
+			printf "FILE $c not found!\n";
+		fi;
+	else
+		printf "FILE $r not found!\n";
+	fi;
+	
+	if [[ $found -eq 0 ]]; then
+		exit;
+	fi;
+		
+	START_TIME=$(date +%s%3N);
+	if [[ -f ./fss$kind ]]; then
+		if [[ $# -eq 7 ]]; then
+			if [[ silent -eq 0 ]]; then printf "timeout $tout ./fss$kind -c $c -r $r -x $x -np $np -si $si -sv $sv -w $w -it $it\n"; fi;
+			timeout $tout ./fss$kind -c $c -r $r -x $x -np $np -si $si -sv $sv -w $w -it $it;
+			e=$?;
+		elif [[ $# -eq 8 ]]; then
+			if [[ silent -eq 0 ]]; then printf "timeout $tout ./fss$kind -c $c -r $r -x $x -np $np -si $si -sv $sv -w $w -it $it $8\n"; fi;
+			timeout $tout ./fss$kind -c $c -r $r -x $x -np $np -si $si -sv $sv -w $w -it $it $8;
+			e=$?;
+		else
+			if [[ silent -eq 0 ]]; then printf "timeout $tout ./fss$kind -c $c -r $r -x $x -np $np -si $si -sv $sv -w $w -it $it $8 $9\n"; fi;
+			timeout $tout ./fss$kind -c $c -r $r -x $x -np $np -si $si -sv $sv -w $w -it $it $8 $9;
+			e=$?;
+		fi;
+		if [[ silent -eq 0 ]]; then if [[ $e -eq 124 ]]; then printf "Timeout\n"; fi; fi;
+		if [[ $e -ne 0 ]]; then printf "%.6f\n" -1; fi;
+	fi;
+	ELAPSED_TIME=$[ $(date +%s%3N) - $START_TIME ];
+	printf "Total time = %s\n" $ELAPSED_TIME;
+	printf "ERR = ";
+	if [[ $# -lt 8 ]]; then
+		../../evaluate$arch -xh $xh -sol $s -np $np;
+	else
+		if [[ $8 == "-s" ]]; then
+			../../evaluate$arch -xh $xh -sol $s -np $np -s;
+		elif [[ $# -gt 8 ]]; then
+			if [[ $9 == "-s" ]]; then
+				../../evaluate$arch -xh $xh -sol $s -np $np -s;
+			fi;
+		fi;
+	fi;
+}
+
+for g in $groups; do
+	cd $g;
+	cp ../../compile* .
+
+	#Controllo di compilazione
+	i=0;
+	while [[ $i -lt ${#archs[@]} ]]; do
+		a=${archs[$i]};
+		./compile$a;
+		if [[ $? -eq 0 ]]; then
+			comparchs[$i]=1;
+		else
+			comparchs[$i]=0;
+		fi;
+		i=$(( $i + 1 ));
+	done;
+
+	S=$g;
+	printf "Gruppo: %s\n" $g;
+	if [[ ! -d "test" ]]; then
+		mkdir test;
+	fi;
+	i=0;
+	while [[ $i -lt ${#dims[@]} ]]; do
+		d=${dims[$i]};
+		np=${nps[$i]};
+		it=${its[$i]};
+		j=0;
+		while [[ $j -lt ${#archs[@]} ]]; do
+			a=${archs[$j]};
+			if [[ ${comparchs[$j]} -eq 1 ]]; then
+				if [[ $# -eq 3 ]]; then
+					exec $tout $a $np $si $sv $w $it $3;
+				elif [[ $# -eq 4 ]]; then
+					exec $tout $a $np $si $sv $w $it $3 $4;
+				else
+					exec $tout $a $np $si $sv $w $it;
+				fi;
+			else
+				if [[ $silent -eq 0 ]]; then printf "Unable to compile $a\n"; fi;
+				printf "%.6f\nTotal time = %d\nERR = %d\n" -1 -1 -1;
+			fi;
+			j=$(( $j + 1 ));
+		done;
+		i=$(( $i + 1 ));
+	done;
+	cd ../..
+	printf "%s\n" $S >> $testname;
+done;
