@@ -50,6 +50,7 @@
 #define	type		float
 #define	MATRIX		type*
 #define	VECTOR		type*
+#define RANDMAX 14000
 
 typedef struct {
 	MATRIX x; //posizione dei pesci
@@ -70,6 +71,7 @@ typedef struct {
     VECTOR w;
     VECTOR deltaf;
     VECTOR deltax;
+    int rand;
 }var;
 
 /*
@@ -182,10 +184,10 @@ void save_data(char* filename, void* X, int n, int k) {
 
 extern void prova(params* input);
 
-type prodScalare(VECTOR v1, VECTOR v2,int inizio,int fine){
-	type ris=0;
-	for(int i =inizio; i<fine; i++){
-		ris+=v1[i]*v2[i];
+type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
+	type ris=0.0;
+	for(int i =0; i<dim; i++){
+		ris+=v1[inizio1+dim]*v2[inizio2+dim];
 	}
 	return ris;
 }
@@ -197,14 +199,13 @@ VECTOR subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int 
 	return ris;
 }
 
-type funzione(VECTOR vettore,params* input,int inizio,int fine){
-	return (type)exp(prodScalare(vettore,vettore,inizio,fine)) + prodScalare(vettore,vettore,inizio,fine)- prodScalare(input->c,vettore,inizio,fine);
+type funzione(VECTOR vettore,params* input,int inizio,int dim){
+	return (type)exp(prodScalare(vettore,vettore,inizio,inizio,input->d)) + prodScalare(vettore,vettore,inizio,inizio,dim)- prodScalare(input->c,vettore,0,inizio,dim);
 }
 
 
-
 void fss(params* input){
-    int it =345;   
+    int it =0;   
     var* vars=malloc(sizeof(var));
     init(input,vars);
     while (it<input->iter){
@@ -223,13 +224,18 @@ void fss(params* input){
 void movimentoIndividuale(params* input,var* vars,int pesce){
     VECTOR newPosition= malloc(sizeof(type)*input->d);
     for(int i=0;i<input->d;i++){
-    	printf("vecchio %f \n",input->x[pesce*input->d+i]); 
-        newPosition[i]=input->x[pesce*input->d+i]+ 2* (((type)rand() / RAND_MAX) -1)*input->stepind;
-        printf("nuovo %f \n",newPosition[i]);       
+        newPosition[i]=input->x[pesce*input->d+i] + ((2* (input->r[vars->rand]))-1)*input->stepind;
+        vars->rand=(vars->rand+1)%RANDMAX;
+        printf("pesce %d, vecchio valore di x%d, %f, nuovo %f \n",pesce,i,input->x[pesce*input->d+i],newPosition[i]);     
     }
-    type deltaf=funzione(newPosition,input,(int)0,input->d)-funzione((VECTOR)input->x,input,pesce*input->d,input->d);
+    type deltaf=(funzione(newPosition,input,(int)0,input->d))-funzione((VECTOR)input->x,input,pesce*input->d,input->d);
+    //printf("f(y)=%f \n",funzione(newPosition,input,(int)0,input->d));
+    //printf("f(x)=%f \n",funzione((VECTOR)input->x,input,pesce*input->d,input->d));
+    //printf("f(y)-f(x):%f \n",deltaf);
 	
-    if(deltaf<0){
+	
+    if(deltaf<2){
+    	printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ");
         for(int i=0;i<input->d;i++){
     		input->x[pesce*input->d+i]=newPosition[i]; //ciclo di copia  
     	}  
@@ -256,6 +262,12 @@ void alimentazione(params* input, var* vars){
         if(fabs((double)vars->deltaf[pesce])>max)
             max=fabs((double)vars->deltaf[pesce]);
     }
+   if(!(max<0.000001&&max>-0.000001)){
+   	printf("%f",max);
+   	for(int pesce=0;pesce<input->np;pesce+=1){
+   		vars->w[pesce]=vars->w[pesce]+ vars->deltaf[pesce]/max;
+   	}
+   }
     
 }
 
@@ -273,6 +285,7 @@ void init(params* input, var* vars){
     vars->w=malloc(sizeof(type)*input->np);
     vars->deltax=malloc(sizeof(type)*input->np*input->d);
     vars->deltaf=malloc(sizeof(type)*input->np);
+    vars->rand=0;
     for(int i=0;i<input->np;i++){
         vars->w[i]=input->wscale/2;    
     }
