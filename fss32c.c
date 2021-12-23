@@ -234,7 +234,7 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
     //printf("f(y)-f(x):%f \n",deltaf);
 	
 	
-    if(deltaf<2){
+    if(deltaf<5){
     	printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ");
         for(int i=0;i<input->d;i++){
     		input->x[pesce*input->d+i]=newPosition[i]; //ciclo di copia  
