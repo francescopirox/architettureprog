@@ -50,7 +50,7 @@
 #define	type		float
 #define	MATRIX		type*
 #define	VECTOR		type*
-#define RANDMAX 14000
+#define RANDMAX 85050
 
 typedef struct {
 	MATRIX x; //posizione dei pesci
@@ -71,6 +71,7 @@ typedef struct {
     VECTOR w;
     VECTOR deltaf;
     VECTOR deltax;
+    VECTOR baricentro;
     int rand;
 }var;
 
@@ -192,11 +193,23 @@ type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 	return ris;
 }
 
-VECTOR subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim){
+void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim){
 	for(int i =0; i<dim; i++){
 		ris[i]=v1[i+inizio1]-v2[i+inizio2];
 	}
 	return ris;
+}
+
+void prodVet_x_Scalare(VECTOR v1, int s, VECTOR ris, int inizio,int dim){	
+	for(int i =0; i<dim; i++){
+		ris[i]=v1[i+inizio]*s;
+	}
+}
+
+void addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim){
+	for(int i =0; i<dim; i++){
+		ris[i]=v1[i+inizio1]+v2[i+inizio2];
+	}
 }
 
 type funzione(VECTOR vettore,params* input,int inizio,int dim){
@@ -213,8 +226,8 @@ void fss(params* input){
             movimentoIndividuale(input,vars,pesce);
         }
         alimentazione(input,vars);
-        movimentoIstintivo(input);
-        baricentro(input);
+        movimentoIstintivo(input,vars);
+        baricentro(input,vars);
         movimentoVolitivo(input);
         aggiornaParametri(input);    
     it+=1;    
@@ -226,7 +239,7 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
     for(int i=0;i<input->d;i++){
         newPosition[i]=input->x[pesce*input->d+i] + ((2* (input->r[vars->rand]))-1)*input->stepind;
         vars->rand=(vars->rand+1)%RANDMAX;
-        printf("pesce %d, vecchio valore di x%d, %f, nuovo %f \n",pesce,i,input->x[pesce*input->d+i],newPosition[i]);     
+        //printf("pesce %d, vecchio valore di x%d, %f, nuovo %f \n",pesce,i,input->x[pesce*input->d+i],newPosition[i]);     
     }
     type deltaf=(funzione(newPosition,input,(int)0,input->d))-funzione((VECTOR)input->x,input,pesce*input->d,input->d);
     //printf("f(y)=%f \n",funzione(newPosition,input,(int)0,input->d));
@@ -234,8 +247,7 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
     //printf("f(y)-f(x):%f \n",deltaf);
 	
 	
-    if(deltaf<5){
-    	printf("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA ");
+    if(deltaf<0){
         for(int i=0;i<input->d;i++){
     		input->x[pesce*input->d+i]=newPosition[i]; //ciclo di copia  
     	}  
@@ -248,10 +260,11 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
         free(ris);
     }else{
     	vars->deltaf[pesce]=0;
-    	vars->deltax[pesce]=0;
+        for(int i=0; i< input->d;i++){
+    	    vars->deltax[pesce*input->d+i]=0;
+    	}
     }
-    free(newPosition); 
-    
+    free(newPosition);
 }	
 
 
@@ -272,11 +285,60 @@ void alimentazione(params* input, var* vars){
 }
 
 
-void movimentoIstintivo(params* input){
+void movimentoIstintivo(params* input, var* vars){
+//CALCOLO LA SOMMATORIA da 1 a n di deltax(vettore) per deltaf(scalare) 
+		VECTOR num = malloc(sizeof(type)*input->d);
+		VECTOR I=malloc(sizeof(type)*input->d);
+		//ciclo di inizializzazione di I
+		
+		for(int i=0; i<input->np; i++){
+			prodVet_x_Scalare(vars->deltax,vars->deltaf,num,i*input->d, input->d);//il risultato va in contatore
+			//addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim)
+			addVettori(I,I,num,0,0,input->d);
+		}
+		type sommaDeltaf=0.0;
+		for(int i=0; i<input->d; i++){
+			sommaDeltaf+=vars->deltaf[i];
+		}
+		prodVet_x_Scalare(I, 1/sommaDeltaf, I, 0, input->d);
+
+//per ogni pesce
+	for(int pesce=0; pesce<input->np; pesce++){
+		VECTOR ris=malloc(sizeof(type)*input->d);
+		addVettori(input->x,I,ris,pesce*input->d,0,input->d);
+		for(int i=0;i < input->d; i++){
+			input->x[pesce*input->d+i]=ris[i];
+			//printf("%f " ,ris[i] );
+		}	
+	}
+	free(num);
+	free(I); 
+	
+}//mov istintivo
+
+void baricentro(params* input, var* vars){
+	//int dim = input->np*d;
+	
+	VECTOR prod_tmp= malloc(sizeof(type)*input->d);
+	VECTOR num= malloc(sizeof(type)*input->d);
+	type denominatore=0;
+	//mi muovo a blocchi di d su x 
+	for(int i=0; i<input->np; i++){
+		//prodVet_x_Scalare(VECTOR v1, int s, VECTOR ris, int inizio,int fine)
+		prodVet_x_Scalare(input->x,vars->w[i],prod_tmp,i*input->d,input->d);
+		addVettori(num, prod_tmp, num,0, 0, input->d);//num(vettore)=valore corrente+ prod_tmp
+	}
+
+	for(int i =0; i<input->np; i++){
+		denominatore += vars->w[i];
+	}
+	prodVet_x_Scalare(num, 1/denominatore, vars->baricentro, 0, input->d);
+
+	free(prod_tmp);
+	free(num);
 }
 
-void baricentro(params* input){
-}
+
 void movimentoVolitivo(params* input){
 }
 void aggiornaParametri(params* input){
@@ -285,12 +347,14 @@ void init(params* input, var* vars){
     vars->w=malloc(sizeof(type)*input->np);
     vars->deltax=malloc(sizeof(type)*input->np*input->d);
     vars->deltaf=malloc(sizeof(type)*input->np);
+    vars->baricentro=malloc(sizeof(type)*input->d);
     vars->rand=0;
     for(int i=0;i<input->np;i++){
         vars->w[i]=input->wscale/2;    
     }
-    
-    srand(time(NULL));
+    for(int i=0;i<input->d;i++){
+    	vars->baricentro[i]=0;
+    }
     
 }
 
