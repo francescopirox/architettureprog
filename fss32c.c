@@ -1,4 +1,4 @@
-/**************************************************************************************
+/**********
 * 
 * CdL Magistrale in Ingegneria Informatica
 * Corso di Architetture e Programmazione dei Sistemi di Elaborazione - a.a. 2020/21
@@ -8,7 +8,7 @@
 * 
 * Fabrizio Angiulli, aprile 2019
 * 
-**************************************************************************************/
+**********/
 
 /*
 * 
@@ -68,6 +68,7 @@ typedef struct {
 } params;
 
 typedef struct {
+    VECTOR wpre;
     VECTOR w;
     VECTOR deltaf;
     VECTOR deltax;
@@ -118,10 +119,10 @@ void dealloc_matrix(MATRIX mat) {
 * 	successivi 4 byte: numero di colonne (M) --> numero intero
 * 	successivi N*M*4 byte: matrix data in row-major order --> numeri floating-point a precisione singola
 * 
-*****************************************************************************
+*********
 *	Se lo si ritiene opportuno, è possibile cambiare la codifica in memoria
 * 	della matrice. 
-*****************************************************************************
+*********
 * 
 */
 MATRIX load_data(char* filename, int *n, int *k) {
@@ -197,10 +198,10 @@ void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int di
 	for(int i =0; i<dim; i++){
 		ris[i]=v1[i+inizio1]-v2[i+inizio2];
 	}
-	return ris;
+	//return ris;
 }
 
-void prodVet_x_Scalare(VECTOR v1, int s, VECTOR ris, int inizio,int dim){	
+void prodVet_x_Scalare(VECTOR v1, float s, VECTOR ris, int inizio,int dim){	
 	for(int i =0; i<dim; i++){
 		ris[i]=v1[i+inizio]*s;
 	}
@@ -213,9 +214,41 @@ void addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int di
 }
 
 type funzione(VECTOR vettore,params* input,int inizio,int dim){
-	return (type)exp(prodScalare(vettore,vettore,inizio,inizio,input->d)) + prodScalare(vettore,vettore,inizio,inizio,dim)- prodScalare(input->c,vettore,0,inizio,dim);
+	return (type)exp(prodScalare(vettore,vettore,inizio,inizio,dim)) + prodScalare(vettore,vettore,inizio,inizio,dim)- prodScalare(input->c,vettore,0,inizio,dim);
 }
 
+type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim){
+	type v=0;
+	for(int i=0;i<dim;i++){
+		v+= ((v2[i+inizio2]-v1[i+inizio1])*(v2[i+inizio2]-v1[i+inizio1]));
+	}
+	return sqrt(v);
+}
+
+type pesoTot(VECTOR v, int dim){
+	type tmp=0;
+	for(int i=0; i<dim;i++){
+		tmp+=v[i];
+	}
+	return tmp;
+}
+
+void minimo(params* input){	
+	type valore_minimo =0;
+	int index = -1;
+	for(int i=0; i<input->np; i++){
+		type valore_tmp = funzione(input->x, input, i*input->d, input->d); 
+		if(valore_tmp<valore_minimo){
+			valore_minimo=valore_tmp;
+			index=i;
+		}
+	}
+	
+	for(int i=0; i<input->d; i++){
+		input->xh[i]=input->x[index*input->d+i];
+	}
+	
+}
 
 void fss(params* input){
     int it =0;   
@@ -231,6 +264,10 @@ void fss(params* input){
         movimentoVolitivo(input);
         aggiornaParametri(input);    
     it+=1;    
+    }
+    minimo(input);
+    for(int i =0; i<input->d; i++){
+    	printf("La posizione %d del vettore xh ha valore %f \n",i,input->xh[i]);
     }
 }
 
@@ -278,6 +315,10 @@ void alimentazione(params* input, var* vars){
    if(!(max<0.000001&&max>-0.000001)){
    	printf("%f",max);
    	for(int pesce=0;pesce<input->np;pesce+=1){
+		vars->wpre[pesce]=vars->w[pesce];
+		//mi tengo un VECTOR di copia relativo ai pesi precedenti prima che vengano aggiornati 
+		//mi servirà successivamente per stabilire il segno dell'equazione del "movimento volitivo"
+		
    		vars->w[pesce]=vars->w[pesce]+ vars->deltaf[pesce]/max;
    	}
    }
@@ -292,7 +333,7 @@ void movimentoIstintivo(params* input, var* vars){
 		//ciclo di inizializzazione di I
 		
 		for(int i=0; i<input->np; i++){
-			prodVet_x_Scalare(vars->deltax,vars->deltaf,num,i*input->d, input->d);//il risultato va in contatore
+			prodVet_x_Scalare(vars->deltax,vars->deltaf[i],num,i*input->d, input->d);//il risultato va in contatore
 			//addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim)
 			addVettori(I,I,num,0,0,input->d);
 		}
@@ -339,21 +380,57 @@ void baricentro(params* input, var* vars){
 }
 
 
-void movimentoVolitivo(params* input){
+void movimentoVolitivo(params* input, var* vars){
+	VECTOR diff = malloc(sizeof(type)*input->d);
+	type pesoTotAtt = pesoTot(vars->w,input->np);
+	type pesoTotPre = pesoTot(vars->wpre,input->np);
+	
+	if(pesoTotAtt-pesoTotPre>0){ //segno "-" nell'equazione (il banco si avvicina al baricentro)
+		for(int pesce=0;pesce<input->np; pesce++){
+			subVettori(input->x,vars->baricentro,diff,pesce*input->d,0, input->d);
+			//type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim){
+			type dist = distEuclidea(input->x, vars->baricentro,pesce*input->d,0,input->d);
+			for(int i=0;i<input->d;i++){
+				input->x[pesce*input->d+i]=input->x[pesce*input->d+i]-input->stepvol* input->r[vars->rand] *(diff[i]/dist);
+				//void prodVet_x_Scalare(VECTOR v1, float s, VECTOR ris, int inizio,int dim){	
+				vars->rand++;
+			}
+	        }
+	}
+	else{ //segno "+" nell'equazione (il banco si allontana dal baricentro)
+		for(int pesce=0;pesce<input->np; pesce++){
+			subVettori(input->x,vars->baricentro,diff,pesce*input->d,0, input->d);
+			type dist = distEuclidea(input->x, vars->baricentro,pesce*input->d,0,input->d);
+			for(int i=0;i<input->d;i++){
+				input->x[pesce*input->d+i]=input->x[pesce*input->d+i]+input->stepvol* input->r[vars->rand] *(diff[i]/dist);
+			vars->rand++;
+			}
+	        }
+	}
+	free(diff);
+	
 }
+
 void aggiornaParametri(params* input){
+	input->stepind=input->stepind-(input->stepind/input->iter);
+	input->stepvol=input->stepvol-(input->stepvol/input->iter);
 }
+
 void init(params* input, var* vars){
     vars->w=malloc(sizeof(type)*input->np);
+    vars->wpre=malloc(sizeof(type)*input->np);
     vars->deltax=malloc(sizeof(type)*input->np*input->d);
     vars->deltaf=malloc(sizeof(type)*input->np);
     vars->baricentro=malloc(sizeof(type)*input->d);
+    input->xh=malloc(sizeof(type)*input->d);
     vars->rand=0;
     for(int i=0;i<input->np;i++){
-        vars->w[i]=input->wscale/2;    
+        vars->w[i]=input->wscale/2;
+	vars->wpre[i]=0;
     }
     for(int i=0;i<input->d;i++){
     	vars->baricentro[i]=0;
+    	input->xh[i]=0;
     }
     
 }
