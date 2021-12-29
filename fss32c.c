@@ -51,7 +51,7 @@
 #define	MATRIX		type*
 #define	VECTOR		type*
 #define RANDMAX 85050
-#define EPSILON 0.00001
+#define EPSILON 0.0000001
 
 typedef struct {
 	MATRIX x; //posizione dei pesci
@@ -198,7 +198,9 @@ type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 
 void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim){
 	for(int i =0; i<dim; i++){
+		
 		ris[i]=v1[i+inizio1]-v2[i+inizio2];
+		
 	}
 	//return ris;
 }
@@ -232,7 +234,7 @@ type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim){
 	for(int i=0;i<dim;i++){
 		v+= ((v2[i+inizio2]-v1[i+inizio1])*(v2[i+inizio2]-v1[i+inizio1]));
 	}
-	return (type)sqrt((double)v);
+	return (type)sqrtf(v);
 }
 
 type pesoTot(VECTOR v, int dim){
@@ -245,7 +247,7 @@ type pesoTot(VECTOR v, int dim){
 
 void minimo(params* input){	
 	type valore_minimo = funzione(input->x, input, 0, input->d); 
-	int index = -1;
+	int index = 0;
 	for(int i=0; i<input->np; i++){
 		type valore_tmp = funzione(input->x, input, i*input->d, input->d); 
 		if(valore_tmp<valore_minimo){
@@ -269,27 +271,31 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
     for(int i=0;i<input->d;i++){
         newPosition[i]=input->x[pesce*input->d+i] + ((2* (input->r[vars->rand]))-1)*input->stepind;
         vars->rand=(vars->rand+1)%RANDMAX;
-        //printf("pesce %d, vecchio valore di x%d, %f, nuovo %f \n",pesce,i,input->x[pesce*input->d+i],newPosition[i]);     
+       // printf("pesce %d, vecchio valore di x%d, %f, nuovo %f \n",pesce,i,input->x[pesce*input->d+i],newPosition[i]);     
     }
     type deltaf=(funzione(newPosition,input,(int)0,input->d))-funzione((VECTOR)input->x,input,pesce*input->d,input->d);
-   /*
+  /* 
+   if(deltaf<-1000){
     printf("f(y)=%f \n",funzione(newPosition,input,(int)0,input->d));
-    printf("f(x)=%f \n",funzione(VECTOR)input->x,input,pesce*input->d,input->d));
+    printf("f(x)=%f \n",funzione((VECTOR)input->x,input,pesce*input->d,input->d));
     printf("f(y)-f(x):%f \n",deltaf);
-    for(int i=0;i<input->d;i++)
+    
+    for(int i=0;i<input->d;i++){
     printf("pesce %d, vecchio valore di x%d, %f, nuovo %f \n",pesce,i,input->x[pesce*input->d+i],newPosition[i]);
-    }*/
+    }}*/
     
     if(deltaf<0){
     	printf("effettuato movimento Individuale \n");
+        VECTOR ris=malloc(sizeof(type)*input->d);
+        subVettori(newPosition,(VECTOR)input->x,ris,0,pesce*input->d,input->d);
         for(int i=0;i<input->d;i++){
     		input->x[pesce*input->d+i]=newPosition[i]; //ciclo di copia  
     	}  
         vars->deltaf[pesce]=deltaf; //assegnamento
-        VECTOR ris=malloc(sizeof(type)*input->d);
-        subVettori(newPosition,(VECTOR)input->x,ris,0,pesce*input->d,input->d);
+       	printf("deltaf %f \n",deltaf);
         for(int i=0;i<input->d;i++){        
         	vars->deltax[pesce*input->d+i]= ris[i];
+        	
         }
         free(ris);
     }else{
@@ -304,23 +310,20 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
 
 
 void alimentazione(params* input, var* vars){
-    float max=fabs((double)vars->deltaf[0]);
+	vars->wbranco=0;
+    type max=fabs((double)vars->deltaf[0]);
     for(int pesce=0;pesce<input->np;pesce+=1){
+    	vars->wbranco+=vars->w[pesce];
         //printf("deltaf x max %f \n",vars->deltaf[pesce]);
         if(fabs((double)vars->deltaf[pesce])>max)
-        
+        	
             max=fabs((double)vars->deltaf[pesce]);
     }
    if(!(max<EPSILON&&max>-EPSILON)){
    	printf("max deltaf %f \n",max);
-   	vars->wbranco=0;
    	for(int pesce=0;pesce<input->np;pesce+=1){
-		vars->wbranco+=vars->w[pesce];
 		
-		//mi tengo un VECTOR di copia relativo ai pesi precedenti prima che vengano aggiornati 
-		//mi servirà successivamente per stabilire il segno dell'equazione del "movimento volitivo"
-		
-   		vars->w[pesce]=vars->w[pesce]+ vars->deltaf[pesce]/max; ////ATTENZIONE MESSO - al posto di +
+   		vars->w[pesce]=vars->w[pesce]- vars->deltaf[pesce]/max; //- al posto di +
    	}
    }
     
@@ -335,31 +338,37 @@ void movimentoIstintivo(params* input, var* vars){
 		for(int i=0; i<input->d; i++){
 			I[i]=0;
 			num[i]=0;
-		}
+		}//ciclo azzeramento
 		for(int i=0; i<input->np; i++){
 			prodVet_x_Scalare(vars->deltax,vars->deltaf[i],num,i*input->d, input->d);//il risultato va in contatore
-			//addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim)
+			for(int k=0; k<input->d; k++){
+				//printf("%f ",vars->deltax[k]);
+				}
+			//addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim)  <----
 			addVettori(I,num,I,0,0,input->d);
 		}
 	
 		type sommaDeltaf=0.0;
-		for(int i=0; i<input->d; i++){
+		for(int i=0; i<input->np; i++){
+			if(vars->deltaf[i]!=0)
+			printf("deltaf considerati :%f \n", vars->deltaf[i]);
 			sommaDeltaf+=vars->deltaf[i];
 		}
+		printf("somma deltaf %f \n", sommaDeltaf);
 		if(sommaDeltaf>EPSILON || sommaDeltaf<-EPSILON){
 			printf("movimento istintivo \n");
 			prodVet_x_Scalare(I, (type)1/sommaDeltaf, I, 0, input->d);
-			//printf("I: %f,%f,%f,%f,%f,%f,%f \n", I[0],I[1],I[2],I[3],I[4],I[5],I[6]);
+			printf("I: %f,%f,%f,%f,%f,%f,%f \n", I[0],I[1],I[2],I[3],I[4],I[5],I[6]);
 //per ogni pesce
 			for(int pesce=0; pesce<input->np; pesce++){
 				VECTOR ris=malloc(sizeof(type)*input->d);
 				addVettori(input->x,I,ris,pesce*input->d,0,input->d);
-				//printf("Nuove coordinate pesce %d dopo mov Instintivo: ",pesce);
+				printf("Nuove coordinate pesce %d dopo mov Instintivo: ",pesce);
 				for(int i=0;i < input->d; i++){
 					input->x[pesce*input->d+i]=ris[i];
-					//printf("%f " ,ris[i] );
+					printf("%f " ,ris[i] );
 				}
-				//printf("\n");	
+				printf("\n");	
 	}
 	}//if
 	free(num);
@@ -411,9 +420,10 @@ void movimentoVolitivo(params* input, var* vars){
 			//type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim){
 			type dist = distEuclidea(input->x, vars->baricentro,pesce*input->d,0,input->d);
 			for(int i=0;i<input->d;i++){
+				if(dist>EPSILON || dist<-EPSILON){
 				input->x[pesce*input->d+i]=input->x[pesce*input->d+i]-input->stepvol* input->r[vars->rand] *(diff[i]/dist);
 				//void prodVet_x_Scalare(VECTOR v1, float s, VECTOR ris, int inizio,int dim){	
-				vars->rand++;
+				vars->rand++;}
 			}
 	        }
 	}
@@ -422,8 +432,9 @@ void movimentoVolitivo(params* input, var* vars){
 			subVettori(input->x,vars->baricentro,diff,pesce*input->d,0, input->d);
 			type dist = distEuclidea(input->x, vars->baricentro,pesce*input->d,0,input->d);
 			for(int i=0;i<input->d;i++){
+				if(dist>EPSILON || dist<-EPSILON){
 				input->x[pesce*input->d+i]=input->x[pesce*input->d+i]+input->stepvol* input->r[vars->rand] *(diff[i]/dist);
-			vars->rand++;
+			vars->rand++;}
 			}
 	        }
 	}
@@ -471,7 +482,7 @@ void fss(params* input){
         movimentoVolitivo(input,vars);
         aggiornaParametri(input);    
     	it+=1;
-    	minimo(input);
+    	//minimo(input);
     	//printf("all'iterazione %d, il vettore dei minimi è %f ,%f ,%f ,%f ,%f ,%f ,%f ,%f \n",it,input->xh[0],input->xh[1],input->xh[2],input->xh[3],input->xh[4],input->xh[5],input->xh[6],input->xh[7]);
     }
     minimo(input);
