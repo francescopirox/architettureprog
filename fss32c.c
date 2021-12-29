@@ -75,6 +75,8 @@ typedef struct {
     VECTOR baricentro;
     int rand;
     type wbranco;
+    type stepindIni; //parametro stepind
+    type stepvolIni; //parametro stepvol
 }var;
 
 /*
@@ -198,9 +200,7 @@ type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 
 void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim){
 	for(int i =0; i<dim; i++){
-		
 		ris[i]=v1[i+inizio1]-v2[i+inizio2];
-		
 	}
 	//return ris;
 }
@@ -254,17 +254,15 @@ void minimo(params* input){
 			valore_minimo=valore_tmp;
 			index=i;
 		}
-	}
-	
+	}	
 	for(int i=0; i<input->d; i++){
 		input->xh[i]=input->x[index*input->d+i];
-	}
-	
+	}	
 }
 
 
 void movimentoIndividuale(params* input,var* vars,int pesce){
-    VECTOR newPosition= malloc(sizeof(type)*input->d);
+    VECTOR newPosition= get_block(sizeof(type),input->d);
     for(int i=0;i<input->d;i++){
     	newPosition[i]=0;
     }
@@ -286,54 +284,49 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
     
     if(deltaf<0){
     	printf("effettuato movimento Individuale \n");
-        VECTOR ris=malloc(sizeof(type)*input->d);
+        VECTOR ris=get_block(sizeof(type),input->d);
         subVettori(newPosition,(VECTOR)input->x,ris,0,pesce*input->d,input->d);
         for(int i=0;i<input->d;i++){
     		input->x[pesce*input->d+i]=newPosition[i]; //ciclo di copia  
     	}  
         vars->deltaf[pesce]=deltaf; //assegnamento
-       	printf("deltaf %f \n",deltaf);
+       	//printf("deltaf %f \n",deltaf);
         for(int i=0;i<input->d;i++){        
         	vars->deltax[pesce*input->d+i]= ris[i];
         	
         }
-        free(ris);
+        free_block(ris);
     }else{
     	vars->deltaf[pesce]=0;
         for(int i=0; i< input->d;i++){
     	    vars->deltax[pesce*input->d+i]=0;
     	}
     }
-    free(newPosition);
+    free_block(newPosition);
 }	
 
-
-
 void alimentazione(params* input, var* vars){
-	vars->wbranco=0;
+    vars->wbranco=0;
     type max=fabs((double)vars->deltaf[0]);
     for(int pesce=0;pesce<input->np;pesce+=1){
     	vars->wbranco+=vars->w[pesce];
         //printf("deltaf x max %f \n",vars->deltaf[pesce]);
         if(fabs((double)vars->deltaf[pesce])>max)
-        	
             max=fabs((double)vars->deltaf[pesce]);
     }
-   if(!(max<EPSILON&&max>-EPSILON)){
+    if(!(max<EPSILON&&max>-EPSILON)){
    	printf("max deltaf %f \n",max);
    	for(int pesce=0;pesce<input->np;pesce+=1){
-		
    		vars->w[pesce]=vars->w[pesce]- vars->deltaf[pesce]/max; //- al posto di +
-   	}
-   }
-    
-}
+   	}//for
+    }//if
+}//alimentazione
 
 
 void movimentoIstintivo(params* input, var* vars){
 //CALCOLO LA SOMMATORIA da 1 a n di deltax(vettore) per deltaf(scalare) 
-		VECTOR num = malloc(sizeof(type)*input->d);
-		VECTOR I=malloc(sizeof(type)*input->d);
+		VECTOR num = get_block(sizeof(type),input->d);
+		VECTOR I= get_block(sizeof(type),input->d);
 		//ciclo di inizializzazione di I
 		for(int i=0; i<input->d; i++){
 			I[i]=0;
@@ -371,16 +364,16 @@ void movimentoIstintivo(params* input, var* vars){
 				printf("\n");	
 	}
 	}//if
-	free(num);
-	free(I); 
+	free_block(num);
+	free_block(I); 
 	
 }//mov istintivo
 
 void baricentro(params* input, var* vars){
 	//int dim = input->np*d;
 	
-	VECTOR prod_tmp= malloc(sizeof(type)*input->d);
-	VECTOR num= malloc(sizeof(type)*input->d);
+	VECTOR prod_tmp= get_block(sizeof(type),input->d);
+	VECTOR num= get_block(sizeof(type),input->d);
 	for(int i=0; i<input->d;i++){
 		num[i]=0;
 		prod_tmp[i]=0;
@@ -404,13 +397,13 @@ void baricentro(params* input, var* vars){
 	}
 	prodVet_x_Scalare(num, (type)1/denominatore, vars->baricentro, 0, input->d);
 	//printf("Baricentro: %f,%f,%f,%f,%f,%f,%f,%f \n",vars->baricentro[0],vars->baricentro[1],vars->baricentro[2],vars->baricentro[3],vars->baricentro[4],vars->baricentro[5],vars->baricentro[6],vars->baricentro[7]);
-	free(prod_tmp);
-	free(num);
+	free_block(prod_tmp);
+	free_block(num);
 }
 
 
 void movimentoVolitivo(params* input, var* vars){
-	VECTOR diff = malloc(sizeof(type)*input->d);
+	VECTOR diff = get_block(sizeof(type),input->d);
 	type pesoTotAtt = pesoTot(vars->w,input->np);
 	type pesoTotPre = vars->wbranco;
 	printf(" wAtt;%f,  wPre%f \n",pesoTotAtt,pesoTotPre );
@@ -438,21 +431,23 @@ void movimentoVolitivo(params* input, var* vars){
 			}
 	        }
 	}
-	free(diff);
+	free_block(diff);
 	
 }
 
-void aggiornaParametri(params* input){
-	input->stepind=input->stepind-(input->stepind/input->iter);
-	input->stepvol=input->stepvol-(input->stepvol/input->iter);
+void aggiornaParametri(params* input, var* vars){
+	input->stepind=input->stepind-(vars->stepindIni/input->iter);
+	input->stepvol=input->stepvol-(vars->stepvolIni/input->iter);
 }
 
 void init(params* input, var* vars){
-    vars->w=malloc(sizeof(type)*input->np);
+    vars->w=get_block(sizeof(type),input->np);
     vars->deltax=malloc(sizeof(type)*input->np*input->d);
-    vars->deltaf=malloc(sizeof(type)*input->np);
-    vars->baricentro=malloc(sizeof(type)*input->d);
-    input->xh=malloc(sizeof(type)*input->d);
+    vars->deltaf=get_block(sizeof(type),input->np);
+    vars->stepindIni=input->stepind;
+    vars->stepvolIni=input->stepvol;
+    vars->baricentro=get_block(sizeof(type),input->d);
+    input->xh=get_block(sizeof(type),input->d);
     vars->rand=0;
     vars->wbranco=0;
     for(int i=0;i<input->np;i++){
@@ -469,7 +464,7 @@ void init(params* input, var* vars){
 
 void fss(params* input){
     int it =0;   
-    var* vars=malloc(sizeof(var));
+    var* vars=get_block(sizeof(var),1);
     init(input,vars);
     while (it<input->iter){
         for(int pesce=0;pesce<input->np;pesce++){
@@ -480,7 +475,7 @@ void fss(params* input){
         baricentro(input,vars);
         //printf("\n all'iterazione %d, il vettore del baricentro è %f ,%f ,%f ,%f ,%f ,%f ,%f ,%f \n",it,vars->baricentro[0],vars->baricentro[1],vars->baricentro[2],vars->baricentro[3],vars->baricentro[4],vars->baricentro[5],vars->baricentro[6],vars->baricentro[7]);
         movimentoVolitivo(input,vars);
-        aggiornaParametri(input);    
+        aggiornaParametri(input,vars);    
     	it+=1;
     	//minimo(input);
     	//printf("all'iterazione %d, il vettore dei minimi è %f ,%f ,%f ,%f ,%f ,%f ,%f ,%f \n",it,input->xh[0],input->xh[1],input->xh[2],input->xh[3],input->xh[4],input->xh[5],input->xh[6],input->xh[7]);
