@@ -1,4 +1,4 @@
-; ---------------------------------------------------------
+;---------------------------------------------------------
 ; Regressione con istruzioni SSE a 32 bit
 ; ---------------------------------------------------------
 ; F. Angiulli
@@ -34,6 +34,7 @@ section .data			; Sezione contenente dati inizializzati
 section .bss			; Sezione contenente dati non inizializzati
 	alignb 16
 	stepind		resd		1
+
 
 section .text			; Sezione contenente il codice macchina
 
@@ -131,3 +132,128 @@ prova:
 		mov	esp, ebp	; ripristina lo Stack Pointer
 		pop	ebp		; ripristina il Base Pointer
 		ret			; torna alla funzione C chiamante
+
+global addVettori
+	
+	dim equ 28
+	inizio2 equ 24
+	inizio1 equ 20
+	ris equ 16
+	v2 equ 12
+	v1 equ 8
+	
+	msgs	db	'stepind:',32,0
+
+addVettori:
+	
+    push		ebp
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push		ebx		; salva i registri da preservare
+	push		esi
+	push		edi
+
+
+
+	
+	XOR ESI,ESI
+    MOV EDI, [EBP+dim]
+    MOV EBX,[EBP+v1]
+    MOV ECX,[EBP+v2]
+    MOV EDX,[EBP+ris]
+    MOV EAX,[EBP+inizio1]
+    SHL EAX, 2
+    ADD EBX,EAX
+    MOV EAX,[EBP+inizio2]
+    SHL EAX, 2
+    ADD EBX,EAX
+	cicloaddvettori:SUB EDI,4
+			CMP EDI,0
+			JL fineAddVettori
+			MOVUPS XMM0,[EBX + 4*ESI]
+			ADDPS XMM0,[ECX+4*ESI]
+			MOVUPS [EDX+4*ESI],XMM0
+			ADD ESI,4	           
+        jmp cicloaddvettori
+            
+	fineAddVettori: ADD EDI,4
+                    
+	ciclofinevettori:SUB EDI,1
+			CMP EDI,0
+			JL e1
+			MOVSS XMM0,[EBP+v1+inizio1+4*ESI]
+			ADDSS XMM0,[EBP+v2+inizio2+4*ESI]
+			MOVSS [EBP+ris+4*ESI],XMM0
+			ADD ESI,1
+			JMP ciclofinevettori
+   
+	e1:
+    pop	edi		; ripristina i registri da preservare
+	pop	esi
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer
+	pop	ebp		; ripristina il Base Pointer
+	ret			; torna alla funzione C chiamante
+
+
+global subVettori
+	
+	dim equ 28
+	inizio2 equ 24
+	inizio1 equ 20
+	ris equ 16
+	v2 equ 12
+	v1 equ 8
+	
+
+subVettori:
+	
+    push		ebp
+	mov		ebp, esp	; il Base Pointer punta al Record di Attivazione corrente
+	push		ebx		; salva i registri da preservare
+	push		esi
+	push		edi
+
+
+
+	
+	XOR ESI,ESI
+    MOV EDI, [EBP+dim]
+    MOV EBX,[EBP+v1]
+    MOV ECX,[EBP+v2]
+    MOV EDX,[EBP+ris]
+
+    MOV EAX,[EBP+inizio1]
+    SHL EAX, 2
+    ADD EBX,EAX
+    MOV EAX,[EBP+inizio2]
+    SHL EAX, 2
+    ADD EBX,EAX
+	ciclosubvettori:SUB EDI,4
+			CMP EDI,0
+			JL fineSubVettori
+			MOVUPS XMM0,[EBX + 4*ESI]
+			SUBPS XMM0,[ECX+4*ESI]
+			MOVUPS [EDX+4*ESI],XMM0
+			ADD ESI,4	           
+        jmp ciclosubvettori
+            
+	fineSubVettori: ADD EDI,4
+                    
+	ciclofinesubvettori:SUB EDI,1
+			CMP EDI,0
+			JL e2
+			MOVSS XMM0,[EBX+4*ESI]
+			SUBSS XMM0,[ECX+v2+inizio2+4*ESI]
+			MOVSS [EDX+4*ESI],XMM0
+			ADD ESI,1
+			JMP ciclofinesubvettori
+   
+	e2:
+    pop	edi		; ripristina i registri da preservare
+	pop	esi
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer
+	pop	ebp		; ripristina il Base Pointer
+	ret			; torna alla funzione C chiamante
+		
+

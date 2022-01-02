@@ -1,14 +1,14 @@
-/**********
+/**************************************************************************************
 * 
 * CdL Magistrale in Ingegneria Informatica
 * Corso di Architetture e Programmazione dei Sistemi di Elaborazione - a.a. 2020/21
 * 
 * Progetto dell'algoritmo Fish School Search 221 231 a
-* in linguaggio assembly x86-32 + SSE
+* in linguaggio assembly x86-64 + SSE
 * 
 * Fabrizio Angiulli, aprile 2019
 * 
-**********/
+**************************************************************************************/
 
 /*
 * 
@@ -26,16 +26,16 @@
 * 
 * potrebbe essere necessario installare le seguenti librerie:
 * 
-*    sudo apt-get install lib32gcc-4.8-dev (o altra versione)
+*    sudo apt-get install lib64gcc-4.8-dev (o altra versione)
 *    sudo apt-get install libc6-dev-i386
 * 
 * Per generare il file eseguibile:
 * 
-* nasm -f elf32 fss32.nasm && gcc -m32 -msse -O0 -no-pie sseutils32.o fss32.o fss32c.c -o fss32c -lm && ./fss32c $pars
+* nasm -f elf64 fss64.nasm && gcc -m64 -msse -O0 -no-pie sseutils64.o fss64.o fss64c.c -o fss64c -lm && ./fss64c $pars
 * 
 * oppure
 * 
-* ./runfss32
+* ./runfss64
 * 
 */
 
@@ -47,11 +47,11 @@
 #include <libgen.h>
 #include <xmmintrin.h>
 
-#define	type		float
+#define	type		double
 #define	MATRIX		type*
 #define	VECTOR		type*
 #define RANDMAX 85050
-#define EPSILON 0.0000001
+#define EPSILON 0.000000001
 
 typedef struct {
 	MATRIX x; //posizione dei pesci
@@ -82,13 +82,12 @@ typedef struct {
 int np;
 int d;
 int iter;
-
 /*
 * 
 *	Le funzioni sono state scritte assumento che le matrici siano memorizzate 
-* 	mediante un array (float*), in modo da occupare un unico blocco
+* 	mediante un array (double*), in modo da occupare un unico blocco
 * 	di memoria, ma a scelta del candidato possono essere 
-* 	memorizzate mediante array di array (float**).
+* 	memorizzate mediante array di array (double**).
 * 
 * 	In entrambi i casi il candidato dovrà inoltre scegliere se memorizzare le
 * 	matrici per righe (row-major order) o per colonne (column major-order).
@@ -98,7 +97,7 @@ int iter;
 */
 
 void* get_block(int size, int elements) { 
-	return _mm_malloc(elements*size,16); 
+	return _mm_malloc(elements*size,32); 
 }
 
 void free_block(void* p) { 
@@ -124,12 +123,12 @@ void dealloc_matrix(MATRIX mat) {
 * 	Codifica del file:
 * 	primi 4 byte: numero di righe (N) --> numero intero
 * 	successivi 4 byte: numero di colonne (M) --> numero intero
-* 	successivi N*M*4 byte: matrix data in row-major order --> numeri floating-point a precisione singola
+* 	successivi N*M*4 byte: matrix data in row-major order --> numeri doubleing-point a precisione singola
 * 
-*********
+*****************************************************************************
 *	Se lo si ritiene opportuno, è possibile cambiare la codifica in memoria
 * 	della matrice. 
-*********
+*****************************************************************************
 * 
 */
 MATRIX load_data(char* filename, int *n, int *k) {
@@ -164,9 +163,9 @@ MATRIX load_data(char* filename, int *n, int *k) {
 *	come matrice di N righe e M colonne
 * 
 * 	Codifica del file:
-* 	primi 4 byte: numero di righe (N) --> numero intero a 32 bit
-* 	successivi 4 byte: numero di colonne (M) --> numero intero a 32 bit
-* 	successivi N*M*4 byte: matrix data in row-major order --> numeri interi o floating-point a precisione singola
+* 	primi 4 byte: numero di righe (N) --> numero intero a 64 bit
+* 	successivi 4 byte: numero di colonne (M) --> numero intero a 64 bit
+* 	successivi N*M*4 byte: matrix data in row-major order --> numeri interi o doubleing-point a precisione singola
 */
 void save_data(char* filename, void* X, int n, int k) {
 	FILE* fp;
@@ -192,9 +191,6 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 extern void prova(params* input);
-extern void addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim);
-extern void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim);
-
 
 type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 	type ris=0.0;
@@ -204,13 +200,13 @@ type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 	return ris;
 }
 
-/*
+
 void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim){
 	for(int i =0; i<dim; i++){
 		ris[i]=v1[i+inizio1]-v2[i+inizio2];
 	}
 	//return ris;
-}*/
+}
 
 void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int inizio,int dim){	
 	for(int i =0; i<dim; i++){
@@ -219,6 +215,11 @@ void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int inizio,int dim){
 	}
 }
 
+void addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim){
+	for(int i =0; i<dim; i++){
+		ris[i]=v1[i+inizio1]+v2[i+inizio2];
+	}
+}
 
 type funzione(VECTOR vettore,params* input,int inizio,int dim){
 	type x2 = prodScalare(vettore,vettore,inizio,inizio,dim);
@@ -434,7 +435,7 @@ void aggiornaParametri(params* input, var* vars){
 
 void init(params* input, var* vars){
     vars->w=get_block(sizeof(type),input->np);
-    vars->deltax=alloc_matrix(input->np,input->d);
+    vars->deltax=malloc(sizeof(type)*input->np*input->d);
     vars->deltaf=get_block(sizeof(type),input->np);
     vars->stepindIni=input->stepind;
     vars->stepvolIni=input->stepvol;
@@ -474,6 +475,7 @@ void fss(params* input){
     minimo(input);
 }
 
+
 int main(int argc, char** argv) {
 
 	char fname[256];
@@ -482,7 +484,7 @@ int main(int argc, char** argv) {
 	char* xfilename = NULL;
 	int i, j, k;
 	clock_t t;
-	float time;
+	double time;
 	
 	//
 	// Imposta i valori di default dei parametri
@@ -673,7 +675,7 @@ int main(int argc, char** argv) {
 	}
 
 	// COMMENTARE QUESTA RIGA!
-	 prova(input);
+	//prova(input);
 	//
 
 	//
@@ -683,7 +685,7 @@ int main(int argc, char** argv) {
 	t = clock();
 	fss(input);
 	t = clock() - t;
-	time = ((float)t)/CLOCKS_PER_SEC;
+	time = ((double)t)/CLOCKS_PER_SEC;
 
 	if(!input->silent)
 		printf("FSS time = %.3f secs\n", time);
@@ -693,7 +695,7 @@ int main(int argc, char** argv) {
 	//
 	// Salva il risultato di xh
 	//
-	sprintf(fname, "xh32_%d_%d_%d.ds2", input->d, input->np, input->iter);
+	sprintf(fname, "xh64_%d_%d_%d.ds2", input->d, input->np, input->iter);
 	save_data(fname, input->xh, 1, input->d);
 	if(input->display){
 		if(input->xh == NULL)

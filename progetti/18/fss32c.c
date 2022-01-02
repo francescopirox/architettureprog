@@ -192,9 +192,7 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 extern void prova(params* input);
-extern void addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim);
-extern void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim);
-
+//extern void addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim);
 
 type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 	type ris=0.0;
@@ -204,13 +202,13 @@ type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 	return ris;
 }
 
-/*
+
 void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim){
 	for(int i =0; i<dim; i++){
 		ris[i]=v1[i+inizio1]-v2[i+inizio2];
 	}
 	//return ris;
-}*/
+}
 
 void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int inizio,int dim){	
 	for(int i =0; i<dim; i++){
@@ -219,6 +217,11 @@ void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int inizio,int dim){
 	}
 }
 
+void addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim){
+	for(int i =0; i<dim; i++){
+		ris[i]=v1[i+inizio1]+v2[i+inizio2];
+	}
+}
 
 type funzione(VECTOR vettore,params* input,int inizio,int dim){
 	type x2 = prodScalare(vettore,vettore,inizio,inizio,dim);
@@ -434,7 +437,7 @@ void aggiornaParametri(params* input, var* vars){
 
 void init(params* input, var* vars){
     vars->w=get_block(sizeof(type),input->np);
-    vars->deltax=alloc_matrix(input->np,input->d);
+    vars->deltax=malloc(sizeof(type)*input->np*input->d);
     vars->deltaf=get_block(sizeof(type),input->np);
     vars->stepindIni=input->stepind;
     vars->stepvolIni=input->stepvol;
@@ -673,7 +676,7 @@ int main(int argc, char** argv) {
 	}
 
 	// COMMENTARE QUESTA RIGA!
-	 prova(input);
+	// prova(input);
 	//
 
 	//
