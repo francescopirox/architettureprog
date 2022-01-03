@@ -142,7 +142,6 @@ global addVettori
 	v2 equ 12
 	v1 equ 8
 	
-	msgs	db	'stepind:',32,0
 
 addVettori:
 	
@@ -180,9 +179,9 @@ addVettori:
 	ciclofinevettori:SUB EDI,1
 			CMP EDI,0
 			JL e1
-			MOVSS XMM0,[EBP+v1+inizio1+4*ESI]
-			ADDSS XMM0,[EBP+v2+inizio2+4*ESI]
-			MOVSS [EBP+ris+4*ESI],XMM0
+			MOVSS XMM0,[EBX+4*ESI]
+			ADDSS XMM0,[ECX+4*ESI]
+			MOVSS [EDX+4*ESI],XMM0
 			ADD ESI,1
 			JMP ciclofinevettori
    
@@ -243,7 +242,7 @@ subVettori:
 			CMP EDI,0
 			JL e2
 			MOVSS XMM0,[EBX+4*ESI]
-			SUBSS XMM0,[ECX+v2+inizio2+4*ESI]
+			SUBSS XMM0,[ECX+4*ESI]
 			MOVSS [EDX+4*ESI],XMM0
 			ADD ESI,1
 			JMP ciclofinesubvettori

@@ -332,6 +332,7 @@ void movimentoIstintivo(params* input, var* vars){
 				}
 			//addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim)  <----
 			addVettori(I,num,I,0,0,d);
+			//printf("I: %f,%f,%f,%f,%f,%f,%f \n", I[0],I[1],I[2],I[3],I[4],I[5],I[6]);
 		}
 	
 		type sommaDeltaf=0.0;
@@ -508,6 +509,7 @@ int main(int argc, char** argv) {
 	// Visualizza la sintassi del passaggio dei parametri da riga comandi
 	//
 
+
 	if(argc <= 1){
 		printf("%s -c <c> -r <r> -x <x> -np <np> -si <stepind> -sv <stepvol> -w <wscale> -it <itmax> [-s] [-d]\n", argv[0]);
 		printf("\nParameters:\n");
@@ -673,9 +675,8 @@ int main(int argc, char** argv) {
 	}
 
 	// COMMENTARE QUESTA RIGA!
-	 prova(input);
+	//prova(input);
 	//
-
 	//
 	// Fish School Search
 	//
