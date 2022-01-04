@@ -278,7 +278,9 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
     if(deltaf<0){
     	//printf("effettuato movimento Individuale \n");
         VECTOR ris=get_block(sizeof(type),d);
+
         subVettori(newPosition,(VECTOR)input->x,ris,0,pesce*d,d);
+
         for(int i=0;i<d;i++){
     		input->x[pesce*d+i]=newPosition[i]; //ciclo di copia  
     	}  
@@ -348,7 +350,7 @@ void movimentoIstintivo(params* input, var* vars){
 			//printf("I: %f,%f,%f,%f,%f,%f,%f \n", I[0],I[1],I[2],I[3],I[4],I[5],I[6]);
 //per ogni pesce
 			for(int pesce=0; pesce<input->np; pesce++){
-				VECTOR ris=malloc(sizeof(type)*d);
+				VECTOR ris=get_block(sizeof(type),d);
 				addVettori(input->x,I,ris,pesce*d,0,d);
 				//printf("Nuove coordinate pesce %d dopo mov Instintivo: ",pesce);
 				for(int i=0;i < d; i++){
@@ -464,6 +466,7 @@ void fss(params* input){
     while (it<iter){
         for(int pesce=0;pesce<np;pesce++){
             movimentoIndividuale(input,vars,pesce);
+                      
         }
         alimentazione(input,vars);
         movimentoIstintivo(input,vars);
@@ -489,7 +492,7 @@ int main(int argc, char** argv) {
 	// Imposta i valori di default dei parametri
 	//
 
-	params* input = malloc(sizeof(params));
+	params* input = get_block(sizeof(params),1);
 
 	input->x = NULL;
 	input->xh = NULL;

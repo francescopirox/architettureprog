@@ -36,6 +36,10 @@ section .bss			; Sezione contenente dati non inizializzati
 
 alignb 32
 stepind		resq		1
+alignb 32
+de		resq		1
+alignb 32
+risSommaEu	resq		1
 
 section .text			; Sezione contenente il codice macchina
 
@@ -118,3 +122,109 @@ prova:
 		mov		rsp, rbp	; ripristina lo Stack Pointer
 		pop		rbp		; ripristina il Base Pointer
 		ret				; torna alla funzione C chiamante
+
+
+global distEuclideaAsm 
+	
+	
+distEuclideaAsm:
+push		rbp				; salva il Base Pointer
+		mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+		pushaq						; salva i registri generali
+		
+		;inserire cicli
+		
+        VXORPD YMM1,YMM1
+	XOR RAX,RAX
+        XOR RBX,RBX
+        SHL RDX,3
+        SHL RCX,3
+        ADD RDI,RDX
+        ADD RSI,RCX
+        
+cicloSommaEuclidea:	
+	SUB R8,4
+	CMP R8,0
+	JL fineSommaEuclidea	       
+        VMOVAPD YMM2,[RSI + RAX]        
+        VSUBPD YMM2,[RDI +RAX]
+        VMULPD YMM2,YMM2
+	VADDPD YMM1,YMM2
+       	ADD RAX,32
+       	JMP cicloSommaEuclidea
+
+fineSommaEuclidea:
+	ADD R8,3
+	VXORPD XMM3,XMM3
+cicloFineSommaEuclidea:	
+	CMP R8,0
+	JL e1
+        VMOVSD XMM2,[RSI+RAX]
+        VSUBSD XMM2,[RDI+RAX]
+        VMULSD XMM2,XMM2,XMM2
+	VADDSD XMM3,XMM2
+	SUB R8,1
+	ADD RAX,8
+	JMP cicloFineSommaEuclidea
+	
+e1:     
+	VHADDPD YMM1,YMM1
+        VEXTRACTF128 XMM0,YMM1,1b ;<-------
+        VADDPD XMM0,XMM1
+        VADDPD XMM0,XMM3
+        VSQRTSD XMM0,XMM0
+        VMOVSD [risSommaEu],XMM0 
+       
+      
+	popaq				; ripristina i registri generali
+	mov		rsp, rbp	; ripristina lo Stack Pointer
+	pop		rbp		; ripristina il Base Pointer
+	VMOVSD XMM0,[risSommaEu] 
+	ret				; torna alla funzione C chiamante
+	
+
+global pesoTot 
+	
+	
+pesoTot:
+push		rbp				; salva il Base Pointer
+		mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+		pushaq						; salva i registri generali
+		
+		;inserire cicli
+		
+        VXORPD YMM1,YMM1
+        XOR RAX,RAX
+cicloPesoTot:	
+	SUB RSI,4
+	CMP RSI,0
+	JL finePesoTot	       
+        VADDPD YMM1,[RDI + RAX]        
+       	ADD RAX,32
+       	JMP cicloPesoTot
+
+finePesoTot:
+	ADD RSI,3
+	VXORPD XMM2,XMM2
+	
+cicloFinePesoTot:	
+	CMP RSI,0
+	JL e2
+        VADDSD XMM2,[RDI+RAX]	
+	SUB RSI,1
+	ADD RAX,8
+	JMP cicloFinePesoTot
+	
+e2:     
+	VHADDPD YMM1,YMM1
+        VEXTRACTF128 XMM0,YMM1,1b ;<-------
+        VADDPD XMM0,XMM1
+        VADDPD XMM0,XMM2
+        VMOVSD [de],XMM0 
+       
+      
+	popaq				; ripristina i registri generali
+	mov		rsp, rbp	; ripristina lo Stack Pointer
+	pop		rbp		; ripristina il Base Pointer
+	VMOVSD XMM0,[de] 
+	ret				; torna alla funzione C chiamante

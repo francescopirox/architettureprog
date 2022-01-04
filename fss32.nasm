@@ -164,13 +164,13 @@ addVettori:
     ADD EBX,EAX
     MOV EAX,[EBP+inizio2]
     SHL EAX, 2
-    ADD EBX,EAX
+    ADD ECX,EAX
 	cicloaddvettori:SUB EDI,4
 			CMP EDI,0
 			JL fineAddVettori
-			MOVUPS XMM0,[EBX + 4*ESI]
+			MOVAPS XMM0,[EBX + 4*ESI]
 			ADDPS XMM0,[ECX+4*ESI]
-			MOVUPS [EDX+4*ESI],XMM0
+			MOVAPS [EDX+4*ESI],XMM0
 			ADD ESI,4	           
         jmp cicloaddvettori
             
@@ -214,9 +214,8 @@ subVettori:
 
 
 
-	
-	XOR ESI,ESI
-    MOV EDI, [EBP+dim]
+    XOR ESI,ESI
+    MOV EDI,[EBP+dim]
     MOV EBX,[EBP+v1]
     MOV ECX,[EBP+v2]
     MOV EDX,[EBP+ris]
@@ -226,13 +225,13 @@ subVettori:
     ADD EBX,EAX
     MOV EAX,[EBP+inizio2]
     SHL EAX, 2
-    ADD EBX,EAX
+    ADD ECX,EAX
 	ciclosubvettori:SUB EDI,4
 			CMP EDI,0
 			JL fineSubVettori
-			MOVUPS XMM0,[EBX + 4*ESI]
+			MOVAPS XMM0,[EBX + 4*ESI]
 			SUBPS XMM0,[ECX+4*ESI]
-			MOVUPS [EDX+4*ESI],XMM0
+			MOVAPS [EDX+4*ESI],XMM0
 			ADD ESI,4	           
         jmp ciclosubvettori
             
