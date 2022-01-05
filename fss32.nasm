@@ -253,5 +253,67 @@ subVettori:
 	mov	esp, ebp	; ripristina lo Stack Pointer
 	pop	ebp		; ripristina il Base Pointer
 	ret			; torna alla funzione C chiamante
+
+
+
+;--------------------------
+
+global prodVet_x_Scalare
+
+	dimV equ 24
+	inizio1 equ 20
+	ris equ 16
+	s equ 12
+	v equ 8
+
+prodVet_x_Scalare:
+	push		ebp
+	mov		ebp, esp		; il Base Pointer punta al Record di Attivazione corrente
+	push		ebx		; salva i registri da preservare
+	push		esi
+	push		edi
+
+	XOR		ESI,  ESI					; i=0
+	MOV		EDI,	[EBP+dimV]			; EDI = dim
+	MOV 	EBX, [EBP+ris]			; EBX = RIS (� L'indirizzo di UN VETTORE)
+	MOVSS 	XMM0, [EBP+s]			; XMM0 = S  [0,0,0,S] (� UNO SCALARE)
+	MOV 	EDX, [EBP+v]			; EDX =V1 (VETTORE DI PARTENZA)
+	MOV	EAX, [EBP+inizio1]	; EAX=INIZIO
+	SHL 	EAX, 2					; INIZIO*4
+	ADD		EDX,	EAX				; EDX=V1+INIZIO
+	;XORPS	XMM0, XMM0
+	SHUFPS 	XMM0, XMM0, 00000000b	; XMM0 = [S, S, S, S]
+
+cicloProdVet_x_Scalare:
+	SUB 		EDI,4					; DIM-4
+	CMP 		EDI,0					; DIM == 0?
+	JL 		fineProdVet_x_Scalare		; se si jumpa all'ultima iterazione
+	MOVUPS 	XMM1,[EDX + 4*ESI]		; XMM1 = [V1, V1, V1, V1]
+	MULPS	XMM1, XMM0				; XMM1 = [V1*S, V1*S, V1*S, V1*S]
+	MOVUPS 	[EBX+ 4*ESI], XMM1
+	ADD 	ESI,4					; i= i+4
+	JMP 	cicloProdVet_x_Scalare
+
+fineProdVet_x_Scalare:
+	ADD 	EDI,4					; dim=dim+4
+
+ciclofineProdVet_x_Scalare:
+	SUB 		EDI,1					; dim=dim-1
+	CMP 		EDI,0					; dim==0?
+	JL 		e3						; se si ho finito e faccio le pop dei registri dallo stack
+	XORPS	XMM1, XMM1				; XMM1 = [0,0,0,0]
+	MOVSS 	XMM1,[EDX+4*ESI]			; XMM1 = [0,0,0,v1[i]]
+	MULSS 	XMM1, XMM0				; XMM1 = [0*S, 0*S, 0*S, v1[i]*S]
+	MOVSS 	[EBX+4*ESI], XMM1
+	INC 		ESI						; i++
+	JMP 		ciclofineProdVet_x_Scalare
+
+e3:
+	pop	edi		; ripristina i registri da preservare
+	pop	esi
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer
+	pop	ebp		; ripristina il Base Pointer
+	ret			; torna alla funzione C chiamante
 		
 

@@ -194,7 +194,7 @@ void save_data(char* filename, void* X, int n, int k) {
 extern void prova(params* input);
 extern void addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim);
 extern void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim);
-
+extern void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int inizio,int dim);
 
 type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 	type ris=0.0;
@@ -212,12 +212,12 @@ void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int di
 	//return ris;
 }*/
 
-void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int inizio,int dim){	
+/*void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int inizio,int dim){	
 	for(int i =0; i<dim; i++){
 		ris[i]=v1[i+inizio]*s;
 		//printf(" v[i+inizio] %f, x %f = %f \n \n \n",v1[i],s,ris[i]);
 	}
-}
+}*/
 
 
 type funzione(VECTOR vettore,params* input,int inizio,int dim){
@@ -680,9 +680,10 @@ int main(int argc, char** argv) {
 	// COMMENTARE QUESTA RIGA!
 	//prova(input);
 	//
-	//
 	// Fish School Search
 	//
+
+  
 
 	t = clock();
 	fss(input);
