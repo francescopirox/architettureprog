@@ -34,6 +34,10 @@ section .data			; Sezione contenente dati inizializzati
 section .bss			; Sezione contenente dati non inizializzati
 	alignb 16
 	stepind		resd		1
+	alignb 16
+	retps		resd		1
+	alignb 16
+	ss1		resd		4
 
 
 section .text			; Sezione contenente il codice macchina
@@ -315,5 +319,73 @@ e3:
 	mov	esp, ebp	; ripristina lo Stack Pointer
 	pop	ebp		; ripristina il Base Pointer
 	ret			; torna alla funzione C chiamante
-		
+;--------------------------------------------------
+
+global prodScalare
+	
+	dimps equ 24
+	inizio2ps equ 20
+	inizio1ps equ 16
+	v2 equ 12
+	v1 equ 8
+	
+prodScalare:
+	
+	push		ebp
+	mov		ebp, esp		; il Base Pointer punta al Record di Attivazione corrente
+	push		ebx		; salva i registri da preservare
+	push		esi
+	push		edi
+	
+	XOR	ESI, 	ESI			; i=0
+	MOV	EDI,	[EBP+dimps]		; EDI = dim
+	MOV 	EBX,	[EBP+v1]		; EBX=V1
+	MOV 	ECX,	[EBP+v2]		; ECX=V2
+; EDX=RIS  (� un float)
+
+	MOV	EAX,	[EBP+inizio1ps]		; EAX=INIZIO1
+	SHL 	EAX,	2				; INIZIO1*4
+	ADD	EBX,	EAX				; EBX=V1+INIZIO1
+	MOV	EAX,	[EBP+inizio2ps]		; EAX=INIZIO2
+	SHL 	EAX,	2				; INIZIO2*4
+	ADD	ECX,	EAX				; ECX= V2+INIZIO2
+	XORPS 	XMM1,	XMM1			; XMM1=0 IL MIO CONTATORE DOVE OGNI V
+	
+cicloprodScalare:	
+	SUB 	EDI,    4				; DIM-4
+	CMP 	EDI,    0				; DIM == 0?
+	JL 		fineProdScalare			; se si jumpa all'ultima iterazione
+	MOVUPS 	XMM0,	[EBX + 4*ESI]		; XMM0 = [V1, V1, V1, V1]
+	MULPS	XMM0,	[ECX + 4*ESI]		; XMM0 = [V1*V2, V1*V2, V1*V2, V1*V2]
+	ADDPS 	XMM1,	XMM0
+	ADD 	ESI,4					;i= i+4
+    JMP cicloprodScalare
+            
+fineProdScalare: 
+	ADD 	EDI,	4					;dim=dim+4
+	XORPS	XMM3,	XMM3    
+ciclofineProdScalare:	
+	SUB 	EDI,	1					;dim=dim-1
+	CMP 	EDI,	0					;dim==0?
+	JL 	e4						;se si ho finito e faccio le pop dei registri dallo stack 
+	MOVSS 	XMM0,	[EBX+4*ESI]			;XMM0 = [0, 0, 0,	v1[i]]
+	MULSS 	XMM0,	[ECX+4*ESI]			;XMM0 = [0, 0, 0, v1[i]*v2[i]]
+	ADDSS	XMM3,	XMM0				;XMM1 = XMM1 + v1[i]*v2[i]
+	INC 		ESI						;i++
+	JMP 		ciclofineProdScalare
+   
+e4:	
+	
+	HADDPS 	XMM1,	XMM1
+	HADDPS 	XMM1,	XMM1
+	
+    	ADDSS	XMM1,	XMM3				
+	MOVSS	[retps],	XMM1
+    	FLD	dword [retps]
+	pop	edi		; ripristina i registri da preservare
+	pop	esi
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer
+	pop	ebp		; ripristina il Base Pointer
+	ret			; torna alla funzione C chiamante
 

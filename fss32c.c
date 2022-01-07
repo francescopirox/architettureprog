@@ -195,7 +195,8 @@ extern void prova(params* input);
 extern void addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim);
 extern void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim);
 extern void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int inizio,int dim);
-
+extern type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim);
+/*
 type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 	type ris=0.0;
 	for(int i =0; i<dim; i++){
@@ -203,7 +204,7 @@ type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 	}
 	return ris;
 }
-
+*/
 /*
 void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim){
 	for(int i =0; i<dim; i++){
@@ -680,10 +681,20 @@ int main(int argc, char** argv) {
 	// COMMENTARE QUESTA RIGA!
 	//prova(input);
 	//
+	// 
 	// Fish School Search
 	//
-
-  
+	/*VECTOR v1=get_block(sizeof(type),8);
+	VECTOR v2=get_block(sizeof(type),8);
+	for(int i=0;i<8;i++){
+		v1[i]=2.0;
+		v2[i]=1.0*i ;
+		//v2[7]=0;
+		printf("%f \n",v1[i]*v2[i]);
+		}
+		
+	printf("%f \n",prodScalare(v1,v2,0,0,7));
+  */
 
 	t = clock();
 	fss(input);
