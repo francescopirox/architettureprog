@@ -421,9 +421,10 @@ e5:
 global copyAlnVector
 
 vcopy	equ	8
-riscopy	equ	12
-inizio	equ	16
-dimcopy	equ	20
+inizio	equ	12
+dimcopy	equ	16
+
+;msg	db	'stepind:',32,0
 
 copyAlnVector:
 	push   ebp
@@ -431,21 +432,25 @@ copyAlnVector:
     	push   ebx
     	push   esi
     	push   edi
-
-
+    	
+    	MOV	EDX,	[EBP+inizio]
+    	AND	EDX,	3
+    	JZ	modulo4
+    	
+    	prints msg
+    	getmem 4,[EBP+dim]
+    	
 	XOR	ESI,	ESI				; i=0
     	MOV	EDI,	[EBP+dimcopy]			; EDI = dim
     	MOV	ECX,	[EBP+inizio]
-    	MOV	EDX,	[EBP+inizio]
     	SHL	ECX,	2
     	MOV	EBX,	[EBP+vcopy]
     	ADD	EBX,	ECX
-    	MOV	EAX,	[EBP+riscopy]
-    	AND	EDX,	3
-    	JZ	modulo4
+    	
 	
     		
 cicloquozientecopy:
+	
     	SUB EDI,4					; dim=dim-4
 	;CMP EDI,0
 	JL finecicloquozientecopy
@@ -465,14 +470,19 @@ finecicloquozientecopy:
 		ADD 	ESI,	4
 		JMP	ciclorestocopy
 modulo4:
-	SUB EDI,4					; dim=dim-4
+	
+	;SUB EDI,4					; dim=dim-4
 	;CMP EDI,0
-	JL finecicloquozientecopy
-	MOVAPS	XMM0,	[EBX+ESI]
-	MOVAPS	[EAX+ESI],	XMM0
-	ADD	ESI,	16
-	JMP	modulo4
-		
+	;JL finecicloquozientecopy
+	;MOVAPS	XMM0,	[EBX+ESI]
+	;MOVAPS	[EAX+ESI],	XMM0
+	;ADD	ESI,	16
+	;JMP	modulo4
+	MOV	ECX,	[EBP+inizio]
+    	SHL	ECX,	2
+    	MOV	EBX,	[EBP+vcopy]
+    	ADD	EBX,	ECX
+	MOV	EAX,	EBX	
 	
 ecopy:
 	pop	edi		; ripristina i registri da preservare

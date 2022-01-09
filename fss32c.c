@@ -69,15 +69,15 @@ typedef struct {
 } params;
 
 typedef struct {
-    VECTOR w;
-    VECTOR deltaf;
-    VECTOR deltax;
-    VECTOR baricentro;
-    int rand;
-    type wbranco;
-    type stepindIni; //parametro stepind
-    type stepvolIni; //parametro stepvol
-}var;
+	VECTOR w;
+    	VECTOR deltaf;
+    	VECTOR deltax;
+    	VECTOR baricentro;
+   	int rand;
+    	type wbranco;
+    	type stepindIni; //parametro stepind
+    	type stepvolIni; //parametro stepvol
+} var;
 
 int np;
 int d;
@@ -197,7 +197,7 @@ extern void subVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim);
 extern void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris,int dim);
 extern type prodScalare(VECTOR v1, VECTOR v2,int dim);
 extern type pesoTot(VECTOR v, int dim);
-extern void copyAlnVector(VECTOR v, VECTOR ris,int inizio, int dim);
+extern VECTOR copyAlnVector(VECTOR v, int inizio, int dim);
 /*
 type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 	type ris=0.0;
@@ -233,12 +233,11 @@ VECTOR copyAlnVector(VECTOR v, int inizio, int dim){
 
 
 type funzione(VECTOR vettore,params* input,int inizio,int dim){
-	VECTOR v=get_block(sizeof(type), dim);
-	copyAlnVector(vettore,v,inizio,dim);
+	VECTOR v=copyAlnVector(vettore,inizio,dim);
 	type x2 = prodScalare(v,v,dim);
 	type ex2 =(type)exp(x2);
 	type cx = prodScalare(input->c,v,dim);
-	free_block(v);
+	//free_block(v);
 	//printf("%f,%f, %f \n", ex2, x2, cx);
 	return ex2+x2-cx;
 }
@@ -267,7 +266,7 @@ void minimo(params* input){
 	int index = 0;
 	for(int i=0; i<np; i++){
 		type valore_tmp = funzione(input->x, input, i*d, d);
-		printf("%f \n",valore_tmp); 
+		//printf("%f \n",valore_tmp); 
 		if(valore_tmp<valore_minimo){
 			valore_minimo=valore_tmp;
 			index=i;
@@ -294,8 +293,7 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
     if(deltaf<0){
     	//printf("effettuato movimento Individuale \n");
         VECTOR ris=get_block(sizeof(type),d);
-	VECTOR v2 =get_block(sizeof(type),d);
-	copyAlnVector((VECTOR)input->x,v2,pesce*d,d);
+	VECTOR v2 =copyAlnVector((VECTOR)input->x,pesce*d,d);
         subVettori(newPosition,v2,ris,d);
 
         for(int i=0;i<d;i++){
@@ -308,7 +306,7 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
         	
         }
         free_block(ris);
-        free_block(v2);
+        //free_block(v2);
     }else{
     	vars->deltaf[pesce]=0;
         for(int i=0; i< d;i++){
@@ -372,15 +370,14 @@ void movimentoIstintivo(params* input, var* vars){
 //per ogni pesce
 			for(int pesce=0; pesce<input->np; pesce++){
 				VECTOR ris=get_block(sizeof(type),d);
-				VECTOR v1=get_block(sizeof(type),d);
-				copyAlnVector(input->x,v1,pesce*d,d);
+				VECTOR v1=copyAlnVector(input->x,pesce*d,d);
 				addVettori(v1,I,ris,d);
 				//printf("Nuove coordinate pesce %d dopo mov Instintivo: ",pesce);
 				for(int i=0;i < d; i++){
 					input->x[pesce*d+i]=ris[i];
 					//printf("%f " ,ris[i] );
 				}
-				free_block(v1);
+				//free_block(v1);
 			}
 		}//if
 	free_block(num);
@@ -402,8 +399,7 @@ void baricentro(params* input, var* vars){
 	//mi muovo a blocchi di d su x 
 	for(int i=0; i<np; i++){
 		//prodVet_x_Scalare(VECTOR v1, int s, VECTOR ris, int inizio,int fine)
-		VECTOR v=get_block(sizeof(type),d);
-		copyAlnVector(input->x,v,i*d,d);
+		VECTOR v=copyAlnVector(input->x,i*d,d);
 		prodVet_x_Scalare(v,vars->w[i],prod_tmp,d);//<-- Problema su x
 		for(int i=0; i<input->d;i++){
 		
@@ -430,8 +426,7 @@ void movimentoVolitivo(params* input, var* vars){
 	//printf(" wAtt;%f,  wPre%f \n",pesoTotAtt,pesoTotPre );
 	if(pesoTotAtt>pesoTotPre){ //segno "-" nell'equazione (il banco si avvicina al baricentro)
 		for(int pesce=0;pesce<np; pesce++){
-			VECTOR v1=get_block(sizeof(type),d);
-			copyAlnVector(input->x,v1,pesce*d,d);
+			VECTOR v1=copyAlnVector(input->x,pesce*d,d);
 			subVettori(v1,vars->baricentro,diff,d);
 			//type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim){
 			type dist = distEuclidea(input->x, vars->baricentro,pesce*d,0,d);
@@ -445,8 +440,7 @@ void movimentoVolitivo(params* input, var* vars){
 	}
 	else{ //segno "+" nell'equazione (il banco si allontana dal baricentro)
 		for(int pesce=0;pesce<np; pesce++){
-			VECTOR v1=get_block(sizeof(type),d);
-			copyAlnVector(input->x,v1,pesce*d,d );
+			VECTOR v1=copyAlnVector(input->x,pesce*d,d );
 			subVettori(v1,vars->baricentro,diff, d);
 			type dist = distEuclidea(input->x, vars->baricentro,pesce*d,0,d);
 			for(int i=0;i<d;i++){
@@ -455,7 +449,7 @@ void movimentoVolitivo(params* input, var* vars){
 				vars->rand++;
 				}
 			}
-	       		free_block(v1);
+	       		//free_block(v1);
 	        }
 	}
 	free_block(diff);
@@ -498,13 +492,13 @@ void fss(params* input){
     while (it<iter){
         
         for(int pesce=0;pesce<np;pesce++){
-            movimentoIndividuale(input,vars,pesce);
+           movimentoIndividuale(input,vars,pesce);
                       
         }
         
         alimentazione(input,vars);
         movimentoIstintivo(input,vars);
-        baricentro(input,vars);
+       	baricentro(input,vars);
         movimentoVolitivo(input,vars);
        	aggiornaParametri(input,vars);    
     	it+=1;
