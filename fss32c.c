@@ -192,10 +192,12 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 extern void prova(params* input);
-extern void addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim);
-extern void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim);
-extern void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int inizio,int dim);
-extern type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim);
+extern void addVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim);
+extern void subVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim);
+extern void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris,int dim);
+extern type prodScalare(VECTOR v1, VECTOR v2,int dim);
+extern type pesoTot(VECTOR v, int dim);
+extern void copyAlnVector(VECTOR v, VECTOR ris,int inizio, int dim);
 /*
 type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 	type ris=0.0;
@@ -219,13 +221,24 @@ void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int di
 		//printf(" v[i+inizio] %f, x %f = %f \n \n \n",v1[i],s,ris[i]);
 	}
 }*/
+/*
+VECTOR copyAlnVector(VECTOR v, int inizio, int dim){
+	VECTOR ret=get_block(sizeof(type),dim);
+	for(int i=0;i<dim;i++){
+		ret[i]=v[i+inizio];
+	}
+	return ret;	
+}
+*/
 
 
 type funzione(VECTOR vettore,params* input,int inizio,int dim){
-	type x2 = prodScalare(vettore,vettore,inizio,inizio,dim);
+	VECTOR v=get_block(sizeof(type), dim);
+	copyAlnVector(vettore,v,inizio,dim);
+	type x2 = prodScalare(v,v,dim);
 	type ex2 =(type)exp(x2);
-	type cx = prodScalare(input->c,vettore,0,inizio,dim);
-	
+	type cx = prodScalare(input->c,v,dim);
+	free_block(v);
 	//printf("%f,%f, %f \n", ex2, x2, cx);
 	return ex2+x2-cx;
 }
@@ -239,7 +252,7 @@ type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim){
 	}
 	return (type)sqrtf(v);
 }
-
+/*
 type pesoTot(VECTOR v, int dim){
 	type tmp=0;
 	for(int i=0; i<dim;i++){
@@ -247,12 +260,14 @@ type pesoTot(VECTOR v, int dim){
 	}
 	return tmp;
 }
+*/
 
 void minimo(params* input){	
 	type valore_minimo = funzione(input->x, input, 0, input->d); 
 	int index = 0;
 	for(int i=0; i<np; i++){
-		type valore_tmp = funzione(input->x, input, i*d, d); 
+		type valore_tmp = funzione(input->x, input, i*d, d);
+		printf("%f \n",valore_tmp); 
 		if(valore_tmp<valore_minimo){
 			valore_minimo=valore_tmp;
 			index=i;
@@ -279,8 +294,9 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
     if(deltaf<0){
     	//printf("effettuato movimento Individuale \n");
         VECTOR ris=get_block(sizeof(type),d);
-
-        subVettori(newPosition,(VECTOR)input->x,ris,0,pesce*d,d);
+	VECTOR v2 =get_block(sizeof(type),d);
+	copyAlnVector((VECTOR)input->x,v2,pesce*d,d);
+        subVettori(newPosition,v2,ris,d);
 
         for(int i=0;i<d;i++){
     		input->x[pesce*d+i]=newPosition[i]; //ciclo di copia  
@@ -292,6 +308,7 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
         	
         }
         free_block(ris);
+        free_block(v2);
     }else{
     	vars->deltaf[pesce]=0;
         for(int i=0; i< d;i++){
@@ -329,12 +346,15 @@ void movimentoIstintivo(params* input, var* vars){
 			num[i]=0;
 		}//ciclo azzeramento
 		for(int i=0; i<input->np; i++){
-			prodVet_x_Scalare(vars->deltax,vars->deltaf[i],num,i*d, d);//il risultato va in contatore
+			VECTOR v=get_block(sizeof(type),d);
+			//copyAlnVector(vars->deltax,v,i*d,d);
+			//prodVet_x_Scalare(v,vars->deltaf[i],num, d);//il risultato va in contatore
 			for(int k=0; k<d; k++){
 				//printf("%f ",vars->deltax[k]);
 				}
 			//addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim)  <----
-			addVettori(I,num,I,0,0,d);
+			addVettori(I,num,I,d);
+			free_block(v);
 			//printf("I: %f,%f,%f,%f,%f,%f,%f \n", I[0],I[1],I[2],I[3],I[4],I[5],I[6]);
 		}
 	
@@ -347,21 +367,24 @@ void movimentoIstintivo(params* input, var* vars){
 		//printf("somma deltaf %f \n", sommaDeltaf);
 		if(sommaDeltaf>EPSILON || sommaDeltaf<-EPSILON){
 			//printf("movimento istintivo \n");
-			prodVet_x_Scalare(I, (type)1/sommaDeltaf, I, 0, d);
+			prodVet_x_Scalare(I, (type)1/sommaDeltaf, I, d);
 			//printf("I: %f,%f,%f,%f,%f,%f,%f \n", I[0],I[1],I[2],I[3],I[4],I[5],I[6]);
 //per ogni pesce
 			for(int pesce=0; pesce<input->np; pesce++){
 				VECTOR ris=get_block(sizeof(type),d);
-				addVettori(input->x,I,ris,pesce*d,0,d);
+				VECTOR v1=get_block(sizeof(type),d);
+				copyAlnVector(input->x,v1,pesce*d,d);
+				addVettori(v1,I,ris,d);
 				//printf("Nuove coordinate pesce %d dopo mov Instintivo: ",pesce);
 				for(int i=0;i < d; i++){
 					input->x[pesce*d+i]=ris[i];
 					//printf("%f " ,ris[i] );
 				}
-	}
-	}//if
-	//free_block(num);
-	//free_block(I); 
+				free_block(v1);
+			}
+		}//if
+	free_block(num);
+	free_block(I); 
 	
 }//mov istintivo
 
@@ -379,19 +402,21 @@ void baricentro(params* input, var* vars){
 	//mi muovo a blocchi di d su x 
 	for(int i=0; i<np; i++){
 		//prodVet_x_Scalare(VECTOR v1, int s, VECTOR ris, int inizio,int fine)
-		prodVet_x_Scalare(input->x,vars->w[i],prod_tmp,i*d,d);//<-- Problema su x
+		VECTOR v=get_block(sizeof(type),d);
+		copyAlnVector(input->x,v,i*d,d);
+		prodVet_x_Scalare(v,vars->w[i],prod_tmp,d);//<-- Problema su x
 		for(int i=0; i<input->d;i++){
 		
 		//printf("%f ",prod_tmp[i]);
 		}
 		//printf("\n");
-		addVettori(num, prod_tmp, num,0, 0, d);//num(vettore)=valore corrente+ prod_tmp
+		addVettori(num, prod_tmp, num, d);//num(vettore)=valore corrente+ prod_tmp
 	}
 
 	for(int i =0; i<input->np; i++){
 		denominatore += vars->w[i];
 	}
-	prodVet_x_Scalare(num, (type)1/denominatore, vars->baricentro, 0, d);
+	prodVet_x_Scalare(num, (type)1/denominatore, vars->baricentro, d);
 	//printf("Baricentro: %f,%f,%f,%f,%f,%f,%f,%f \n",vars->baricentro[0],vars->baricentro[1],vars->baricentro[2],vars->baricentro[3],vars->baricentro[4],vars->baricentro[5],vars->baricentro[6],vars->baricentro[7]);
 	free_block(prod_tmp);
 	free_block(num);
@@ -405,7 +430,9 @@ void movimentoVolitivo(params* input, var* vars){
 	//printf(" wAtt;%f,  wPre%f \n",pesoTotAtt,pesoTotPre );
 	if(pesoTotAtt>pesoTotPre){ //segno "-" nell'equazione (il banco si avvicina al baricentro)
 		for(int pesce=0;pesce<np; pesce++){
-			subVettori(input->x,vars->baricentro,diff,pesce*d,0, d);
+			VECTOR v1=get_block(sizeof(type),d);
+			copyAlnVector(input->x,v1,pesce*d,d);
+			subVettori(v1,vars->baricentro,diff,d);
 			//type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim){
 			type dist = distEuclidea(input->x, vars->baricentro,pesce*d,0,d);
 			for(int i=0;i<d;i++){
@@ -418,16 +445,20 @@ void movimentoVolitivo(params* input, var* vars){
 	}
 	else{ //segno "+" nell'equazione (il banco si allontana dal baricentro)
 		for(int pesce=0;pesce<np; pesce++){
-			subVettori(input->x,vars->baricentro,diff,pesce*d,0, d);
+			VECTOR v1=get_block(sizeof(type),d);
+			copyAlnVector(input->x,v1,pesce*d,d );
+			subVettori(v1,vars->baricentro,diff, d);
 			type dist = distEuclidea(input->x, vars->baricentro,pesce*d,0,d);
 			for(int i=0;i<d;i++){
 				if(dist>EPSILON || dist<-EPSILON){
 				input->x[pesce*d+i]=input->x[pesce*d+i]+input->stepvol* input->r[vars->rand] *(diff[i]/dist);
-			vars->rand++;}
+				vars->rand++;
+				}
 			}
+	       		free_block(v1);
 	        }
 	}
-	//free_block(diff);
+	free_block(diff);
 	
 }
 
@@ -465,15 +496,17 @@ void fss(params* input){
     var* vars=get_block(sizeof(var),1);
     init(input,vars);
     while (it<iter){
+        
         for(int pesce=0;pesce<np;pesce++){
             movimentoIndividuale(input,vars,pesce);
                       
         }
+        
         alimentazione(input,vars);
         movimentoIstintivo(input,vars);
         baricentro(input,vars);
         movimentoVolitivo(input,vars);
-        aggiornaParametri(input,vars);    
+       	aggiornaParametri(input,vars);    
     	it+=1;
     }
     minimo(input);
@@ -527,7 +560,7 @@ int main(int argc, char** argv) {
 		printf("\titmax: numero di iterazioni, default 350\n");
 		printf("\nOptions:\n");
 		printf("\t-s: modo silenzioso, nessuna stampa, default 0 - false\n");
-		printf("\t-d: stampa a video i risultati, default 0 - false\n");
+		printf("\t-d: stgot ampa a video i risultati, default 0 - false\n");
 		exit(0);
 	}
 

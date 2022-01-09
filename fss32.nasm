@@ -38,6 +38,8 @@ section .bss			; Sezione contenente dati non inizializzati
 	retps		resd		1
 	alignb 16
 	ss1		resd		4
+	alignb 16
+	retpt		resd		1
 
 
 section .text			; Sezione contenente il codice macchina
@@ -139,9 +141,7 @@ prova:
 
 global addVettori
 	
-	dim equ 28
-	inizio2 equ 24
-	inizio1 equ 20
+	dim equ 20
 	ris equ 16
 	v2 equ 12
 	v1 equ 8
@@ -163,12 +163,7 @@ addVettori:
     MOV EBX,[EBP+v1]
     MOV ECX,[EBP+v2]
     MOV EDX,[EBP+ris]
-    MOV EAX,[EBP+inizio1]
-    SHL EAX, 2
-    ADD EBX,EAX
-    MOV EAX,[EBP+inizio2]
-    SHL EAX, 2
-    ADD ECX,EAX
+   
 	cicloaddvettori:SUB EDI,4
 			CMP EDI,0
 			JL fineAddVettori
@@ -200,9 +195,7 @@ addVettori:
 
 global subVettori
 	
-	dim equ 28
-	inizio2 equ 24
-	inizio1 equ 20
+	dim equ 20
 	ris equ 16
 	v2 equ 12
 	v1 equ 8
@@ -223,13 +216,7 @@ subVettori:
     MOV EBX,[EBP+v1]
     MOV ECX,[EBP+v2]
     MOV EDX,[EBP+ris]
-
-    MOV EAX,[EBP+inizio1]
-    SHL EAX, 2
-    ADD EBX,EAX
-    MOV EAX,[EBP+inizio2]
-    SHL EAX, 2
-    ADD ECX,EAX
+    
 	ciclosubvettori:SUB EDI,4
 			CMP EDI,0
 			JL fineSubVettori
@@ -264,8 +251,7 @@ subVettori:
 
 global prodVet_x_Scalare
 
-	dimV equ 24
-	inizio1 equ 20
+	dimV equ 20
 	ris equ 16
 	s equ 12
 	v equ 8
@@ -282,9 +268,7 @@ prodVet_x_Scalare:
 	MOV 	EBX, [EBP+ris]			; EBX = RIS (� L'indirizzo di UN VETTORE)
 	MOVSS 	XMM0, [EBP+s]			; XMM0 = S  [0,0,0,S] (� UNO SCALARE)
 	MOV 	EDX, [EBP+v]			; EDX =V1 (VETTORE DI PARTENZA)
-	MOV	EAX, [EBP+inizio1]	; EAX=INIZIO
-	SHL 	EAX, 2					; INIZIO*4
-	ADD		EDX,	EAX				; EDX=V1+INIZIO
+	
 	;XORPS	XMM0, XMM0
 	SHUFPS 	XMM0, XMM0, 00000000b	; XMM0 = [S, S, S, S]
 
@@ -323,9 +307,7 @@ e3:
 
 global prodScalare
 	
-	dimps equ 24
-	inizio2ps equ 20
-	inizio1ps equ 16
+	dimps equ 16
 	v2 equ 12
 	v1 equ 8
 	
@@ -343,12 +325,7 @@ prodScalare:
 	MOV 	ECX,	[EBP+v2]		; ECX=V2
 ; EDX=RIS  (� un float)
 
-	MOV	EAX,	[EBP+inizio1ps]		; EAX=INIZIO1
-	SHL 	EAX,	2				; INIZIO1*4
-	ADD	EBX,	EAX				; EBX=V1+INIZIO1
-	MOV	EAX,	[EBP+inizio2ps]		; EAX=INIZIO2
-	SHL 	EAX,	2				; INIZIO2*4
-	ADD	ECX,	EAX				; ECX= V2+INIZIO2
+	
 	XORPS 	XMM1,	XMM1			; XMM1=0 IL MIO CONTATORE DOVE OGNI V
 	
 cicloprodScalare:	
@@ -388,4 +365,122 @@ e4:
 	mov	esp, ebp	; ripristina lo Stack Pointer
 	pop	ebp		; ripristina il Base Pointer
 	ret			; torna alla funzione C chiamante
+	
+;----------------------------------------------------------------------------
+global pesoTot
+
+       dimp equ 12
+       v equ 8
+
+pesoTot: 
+	push   ebp
+    	mov    ebp, esp
+    	push   ebx
+    	push   esi
+    	push   edi
+
+	XOR ESI,ESI					; i=0
+    	MOV EDI, [EBP+dimp]			; EDI = dim
+    	MOV EBX, [EBP+v]				; EBX = v
+    	XORPS XMM0, XMM0				; XMM0 = [0,0,0,0]
+    	XORPS XMM1, XMM1				; XMM1 = [0,0,0,0]
+	
+cicloPesoTot: 
+	SUB EDI,4					; dim=dim-4
+	CMP EDI,0					; dim==0?
+     	JL  	finePesoTot					; se si vado a stop
+	ADDPS XMM0, [EBX+ ESI*4]		; XMM0 = [v,v,v,v]
+       	ADD ESI, 4					; i=i+4
+	JMP cicloPesoTot	
+	
+finePesoTot: 
+	ADD EDI, 4
+	
+ciclofinePesoTot: 
+	SUB EDI,1					; dim--
+	CMP EDI, 0					; dim ==0?
+	JL e5						; se si ho finito
+      	ADDSS XMM1, [EBX+ESI*4]		; XMM1 = [0,0,0,v]
+	INC ESI						; i++
+     	JMP ciclofinePesoTot
+e5:
+	HADDPS XMM0, XMM0		
+	HADDPS XMM0,XMM0			; prima somma parziale (multipli di 4)
+	ADDSS XMM0, XMM1			; somma delle due somme parziali
+
+    	MOVSS [retpt], XMM0
+
+	FLD dword [retpt]
+   	pop edi 
+    	pop esi
+    	pop ebx
+    	mov esp, ebp 
+    	pop ebp 
+    	ret
+;-------------------------
+global copyAlnVector
+
+vcopy	equ	8
+riscopy	equ	12
+inizio	equ	16
+dimcopy	equ	20
+
+copyAlnVector:
+	push   ebp
+    	mov    ebp, esp
+    	push   ebx
+    	push   esi
+    	push   edi
+
+
+	XOR	ESI,	ESI				; i=0
+    	MOV	EDI,	[EBP+dimcopy]			; EDI = dim
+    	MOV	ECX,	[EBP+inizio]
+    	MOV	EDX,	[EBP+inizio]
+    	SHL	ECX,	2
+    	MOV	EBX,	[EBP+vcopy]
+    	ADD	EBX,	ECX
+    	MOV	EAX,	[EBP+riscopy]
+    	AND	EDX,	3
+    	JZ	modulo4
+	
+    		
+cicloquozientecopy:
+    	SUB EDI,4					; dim=dim-4
+	;CMP EDI,0
+	JL finecicloquozientecopy
+	MOVUPS	XMM0,	[EBX+ESI]
+	MOVAPS	[EAX+ESI],	XMM0
+	ADD	ESI,	16
+	JMP	cicloquozientecopy
+	
+finecicloquozientecopy:
+	ADD	EDI,	4
+	ciclorestocopy:
+		SUB 	EDI,	1
+		;CMP	EDI,	0
+		JL	ecopy
+		MOVSS	XMM0,	[ESI+EAX]
+		MOVSS	[ESI+EBX],	XMM0
+		ADD 	ESI,	4
+		JMP	ciclorestocopy
+modulo4:
+	SUB EDI,4					; dim=dim-4
+	;CMP EDI,0
+	JL finecicloquozientecopy
+	MOVAPS	XMM0,	[EBX+ESI]
+	MOVAPS	[EAX+ESI],	XMM0
+	ADD	ESI,	16
+	JMP	modulo4
+		
+	
+ecopy:
+	pop	edi		; ripristina i registri da preservare
+	pop	esi
+	pop	ebx
+	mov	esp, ebp	; ripristina lo Stack Pointer
+	pop	ebp		; ripristina il Base Pointer
+	ret	
+
+
 
