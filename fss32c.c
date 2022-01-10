@@ -198,6 +198,7 @@ extern void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris,int dim);
 extern type prodScalare(VECTOR v1, VECTOR v2,int dim);
 extern type pesoTot(VECTOR v, int dim);
 extern VECTOR copyAlnVector(VECTOR v, int inizio, int dim);
+extern type distEuclidea(VECTOR v1, VECTOR v2, int dim);
 /*
 type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
 	type ris=0.0;
@@ -243,7 +244,7 @@ type funzione(VECTOR vettore,params* input,int inizio,int dim){
 }
 
 
-
+/*
 type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim){
 	type v=0;
 	for(int i=0;i<dim;i++){
@@ -251,6 +252,7 @@ type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim){
 	}
 	return (type)sqrtf(v);
 }
+*/
 /*
 type pesoTot(VECTOR v, int dim){
 	type tmp=0;
@@ -429,7 +431,7 @@ void movimentoVolitivo(params* input, var* vars){
 			VECTOR v1=copyAlnVector(input->x,pesce*d,d);
 			subVettori(v1,vars->baricentro,diff,d);
 			//type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim){
-			type dist = distEuclidea(input->x, vars->baricentro,pesce*d,0,d);
+			type dist = distEuclidea(v1, vars->baricentro,d);
 			for(int i=0;i<d;i++){
 				if(dist>EPSILON || dist<-EPSILON){
 				input->x[pesce*d+i]=input->x[pesce*d+i]-input->stepvol* input->r[vars->rand] *(diff[i]/dist);
@@ -442,7 +444,7 @@ void movimentoVolitivo(params* input, var* vars){
 		for(int pesce=0;pesce<np; pesce++){
 			VECTOR v1=copyAlnVector(input->x,pesce*d,d );
 			subVettori(v1,vars->baricentro,diff, d);
-			type dist = distEuclidea(input->x, vars->baricentro,pesce*d,0,d);
+			type dist = distEuclidea(v1, vars->baricentro,d);
 			for(int i=0;i<d;i++){
 				if(dist>EPSILON || dist<-EPSILON){
 				input->x[pesce*d+i]=input->x[pesce*d+i]+input->stepvol* input->r[vars->rand] *(diff[i]/dist);

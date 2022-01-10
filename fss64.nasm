@@ -41,6 +41,9 @@ de		resq		1
 alignb 32
 risSommaEu	resq		1
 
+alignb 32
+cv	resq		1
+
 section .text			; Sezione contenente il codice macchina
 
 ; ----------------------------------------------------------
@@ -137,14 +140,11 @@ push		rbp				; salva il Base Pointer
         VXORPD YMM1,YMM1
 	XOR RAX,RAX
         XOR RBX,RBX
-        SHL RDX,3
-        SHL RCX,3
-        ADD RDI,RDX
-        ADD RSI,RCX
+        
         
 cicloSommaEuclidea:	
-	SUB R8,4
-	CMP R8,0
+	SUB RDX,4
+	CMP RDX,0
 	JL fineSommaEuclidea	       
         VMOVAPD YMM2,[RSI + RAX]        
         VSUBPD YMM2,[RDI +RAX]
@@ -154,7 +154,7 @@ cicloSommaEuclidea:
        	JMP cicloSommaEuclidea
 
 fineSommaEuclidea:
-	ADD R8,3
+	ADD RDX,3
 	VXORPD XMM3,XMM3
 cicloFineSommaEuclidea:	
 	CMP R8,0
@@ -163,7 +163,7 @@ cicloFineSommaEuclidea:
         VSUBSD XMM2,[RDI+RAX]
         VMULSD XMM2,XMM2,XMM2
 	VADDSD XMM3,XMM2
-	SUB R8,1
+	SUB RDX,1
 	ADD RAX,8
 	JMP cicloFineSommaEuclidea
 	
@@ -187,9 +187,9 @@ global pesoTot
 	
 	
 pesoTot:
-push		rbp				; salva il Base Pointer
-		mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
-		pushaq						; salva i registri generali
+	push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq						; salva i registri generali
 		
 		;inserire cicli
 		
@@ -228,3 +228,66 @@ e2:
 	pop		rbp		; ripristina il Base Pointer
 	VMOVSD XMM0,[de] 
 	ret				; torna alla funzione C chiamante
+	
+	
+;---------------------------------
+
+global copyAlnVector
+
+copyAlnVector:
+	push		rbp				; salva il Base Pointer
+	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
+	pushaq	
+	
+    	
+    	MOV	RCX,	RDX
+    	AND	RDX,	3
+    	JZ	modulo4
+    	PUSH 	RDI
+    	PUSH 	RSI
+    	PUSH 	RCX
+    	getmem 8, RCX
+    	MOV	[cv],	RAX
+    	POP	RCX
+    	POP	RSI
+    	POP	RDI
+    	
+	XOR	RDX,	RDX
+    	SHL	RCX,	3
+    	ADD	RDI,	RCX
+    	
+	
+    		
+cicloquozientecopy:
+	
+    	SUB RSI,32					; dim=dim-4
+	;CMP EDI,0
+	JL finecicloquozientecopy
+	VMOVUPD	YMM0,	[RDI+RDX]
+	VMOVAPD	[RAX+RDX],	YMM0
+	ADD	RDX,	32
+	JMP	cicloquozientecopy
+	
+finecicloquozientecopy:
+	ADD	RSI,	32
+	ciclorestocopy:
+		SUB 	RSI,	8
+		JL	ecopy
+		VMOVSS	XMM0,	[RDI+RDX]
+		VMOVSS	[RAX+RDX],	XMM0
+		ADD 	RDX,	8
+		JMP	ciclorestocopy
+modulo4:
+	
+    	SHL	RCX,	3
+    	ADD	RDI,	RCX
+	MOV	[cv],	RDI	
+	
+ecopy:
+	 
+	popaq				; ripristina i registri generali
+	mov		rsp, rbp	; ripristina lo Stack Pointer
+	pop		rbp		; ripristina il Base Pointer
+	MOV 	RAX,	[cv]
+	ret				; torna alla funzione C chiamante
+

@@ -191,7 +191,8 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 extern void prova(params* input);
-extern type distEuclideaAsm(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim);
+extern VECTOR copyAlnVector(VECTOR v, int inizio, int dim);
+extern type distEuclideaAsm(VECTOR v1, VECTOR v2, int dim);
 extern type pesoTot(VECTOR v, int dim);
 
 type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
@@ -405,11 +406,10 @@ void movimentoVolitivo(params* input, var* vars){
 	//printf(" wAtt;%f,  wPre%f \n",pesoTotAtt,pesoTotPre );
 	if(pesoTotAtt>pesoTotPre){ //segno "-" nell'equazione (il banco si avvicina al baricentro)
 		for(int pesce=0;pesce<np; pesce++){
+			VECTOR v1=copyAlnVector(input->x,pesce*d,d);
 			subVettori(input->x,vars->baricentro,diff,pesce*d,0, d);
-			//type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim){
-			//type* dist = get_block(sizeof(type),1);
 
-            type dist=distEuclideaAsm(input->x, vars->baricentro,pesce*d,0,d);
+            		type dist=distEuclideaAsm(v1, vars->baricentro,d);
 			for(int i=0;i<d;i++){
 				if(dist>EPSILON || dist<-EPSILON){
 				input->x[pesce*d+i]=input->x[pesce*d+i]-input->stepvol* input->r[vars->rand] *(diff[i]/dist);
@@ -420,11 +420,10 @@ void movimentoVolitivo(params* input, var* vars){
 	}
 	else{ //segno "+" nell'equazione (il banco si allontana dal baricentro)
 		for(int pesce=0;pesce<np; pesce++){
-			subVettori(input->x,vars->baricentro,diff,pesce*d,0, d);
+			VECTOR v1=copyAlnVector(input->x,pesce*d,d);
+			subVettori(v1,vars->baricentro,diff,0,0, d);
 			//type* dist = get_block(sizeof(type),1);
-            type dist=distEuclideaAsm(input->x, vars->baricentro,pesce*d,0,d)*1;
-
-          
+            		type dist=distEuclideaAsm(v1, vars->baricentro,d);
           
 			for(int i=0;i<d;i++){
 				if(dist>EPSILON || dist<-EPSILON){

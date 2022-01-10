@@ -165,7 +165,7 @@ addVettori:
     MOV EDX,[EBP+ris]
    
 	cicloaddvettori:SUB EDI,4
-			CMP EDI,0
+			;CMP EDI,0
 			JL fineAddVettori
 			MOVAPS XMM0,[EBX + 4*ESI]
 			ADDPS XMM0,[ECX+4*ESI]
@@ -176,7 +176,7 @@ addVettori:
 	fineAddVettori: ADD EDI,4
                     
 	ciclofinevettori:SUB EDI,1
-			CMP EDI,0
+			;CMP EDI,0
 			JL e1
 			MOVSS XMM0,[EBX+4*ESI]
 			ADDSS XMM0,[ECX+4*ESI]
@@ -218,7 +218,7 @@ subVettori:
     MOV EDX,[EBP+ris]
     
 	ciclosubvettori:SUB EDI,4
-			CMP EDI,0
+			;CMP EDI,0
 			JL fineSubVettori
 			MOVAPS XMM0,[EBX + 4*ESI]
 			SUBPS XMM0,[ECX+4*ESI]
@@ -229,7 +229,7 @@ subVettori:
 	fineSubVettori: ADD EDI,4
                     
 	ciclofinesubvettori:SUB EDI,1
-			CMP EDI,0
+			;CMP EDI,0
 			JL e2
 			MOVSS XMM0,[EBX+4*ESI]
 			SUBSS XMM0,[ECX+4*ESI]
@@ -274,7 +274,7 @@ prodVet_x_Scalare:
 
 cicloProdVet_x_Scalare:
 	SUB 		EDI,4					; DIM-4
-	CMP 		EDI,0					; DIM == 0?
+	;CMP 		EDI,0					; DIM == 0?
 	JL 		fineProdVet_x_Scalare		; se si jumpa all'ultima iterazione
 	MOVUPS 	XMM1,[EDX + 4*ESI]		; XMM1 = [V1, V1, V1, V1]
 	MULPS	XMM1, XMM0				; XMM1 = [V1*S, V1*S, V1*S, V1*S]
@@ -330,7 +330,7 @@ prodScalare:
 	
 cicloprodScalare:	
 	SUB 	EDI,    4				; DIM-4
-	CMP 	EDI,    0				; DIM == 0?
+	;CMP 	EDI,    0				; DIM == 0?
 	JL 		fineProdScalare			; se si jumpa all'ultima iterazione
 	MOVUPS 	XMM0,	[EBX + 4*ESI]		; XMM0 = [V1, V1, V1, V1]
 	MULPS	XMM0,	[ECX + 4*ESI]		; XMM0 = [V1*V2, V1*V2, V1*V2, V1*V2]
@@ -343,7 +343,7 @@ fineProdScalare:
 	XORPS	XMM3,	XMM3    
 ciclofineProdScalare:	
 	SUB 	EDI,	1					;dim=dim-1
-	CMP 	EDI,	0					;dim==0?
+	;CMP 	EDI,	0					;dim==0?
 	JL 	e4						;se si ho finito e faccio le pop dei registri dallo stack 
 	MOVSS 	XMM0,	[EBX+4*ESI]			;XMM0 = [0, 0, 0,	v1[i]]
 	MULSS 	XMM0,	[ECX+4*ESI]			;XMM0 = [0, 0, 0, v1[i]*v2[i]]
@@ -387,7 +387,7 @@ pesoTot:
 	
 cicloPesoTot: 
 	SUB EDI,4					; dim=dim-4
-	CMP EDI,0					; dim==0?
+	;CMP EDI,0					; dim==0?
      	JL  	finePesoTot					; se si vado a stop
 	ADDPS XMM0, [EBX+ ESI*4]		; XMM0 = [v,v,v,v]
        	ADD ESI, 4					; i=i+4
@@ -470,14 +470,7 @@ finecicloquozientecopy:
 		ADD 	ESI,	4
 		JMP	ciclorestocopy
 modulo4:
-	
-	;SUB EDI,4					; dim=dim-4
-	;CMP EDI,0
-	;JL finecicloquozientecopy
-	;MOVAPS	XMM0,	[EBX+ESI]
-	;MOVAPS	[EAX+ESI],	XMM0
-	;ADD	ESI,	16
-	;JMP	modulo4
+
 	MOV	ECX,	[EBP+inizio]
     	SHL	ECX,	2
     	MOV	EBX,	[EBP+vcopy]
@@ -493,4 +486,63 @@ ecopy:
 	ret	
 
 
+;------------------
+global distEuclidea
+	dimeucl equ 16
+       	v2 equ 12
+       	v1 equ 8
+
+distEuclidea: 
+	push   ebp
+    	mov    ebp, esp
+    	push   ebx
+    	push   esi
+    	push   edi
+
+	XOR ESI,ESI
+    	MOV EDI, [EBP+dimeucl]
+	MOV EAX, [EBP+v1]
+    	MOV EBX, [EBP+v2]
+    	XORPS XMM1, XMM1  ;registro per le somme a multipli di 4
+    	XORPS XMM2, XMM2  ;registro per le somme restanti
+cicloDistEuclidea: 
+	SUB EDI,4
+         	CMP EDI,0
+     	JL  fineDistEuclidea
+           	MOVUPS XMM0,[EAX+ESI*4]      ;XMM0=[v1, v1, v1, v1]
+
+	SUBPS XMM0, [EBX+ESI*4]        ;XMM0=[v1-v2, v1-v2, v1-v2, v1-v2]
+	MULPS XMM0, XMM0  ;XMM0=[v1-v2*v1-v2, v1-v2*v1-v2, v1-v2*v1-v2, v1-v2*v1-v2]
+	ADDPS XMM1, XMM0    ;sommo le differenze dei quadrati sulle celle di XMM1
+       	ADD ESI, 4
+          	JMP cicloDistEuclidea
+fineDistEuclidea: 
+	ADD EDI, 4
+
+ciclofineDistEuclidea: 
+	SUB EDI,1
+        	CMP EDI, 0
+         	JL e7
+      	MOVSS XMM0, [EAX+ESI*4]  ;XMM0=[0, 0, 0, v1]
+	SUBSS XMM0, [EBX+ESI*4]      ;XMM0=[0, 0, 0, (v1-v2)]
+	MULSS XMM0, XMM0              ;XMM0=[0, 0, 0, (v1-v2)*(v1-v2)]
+	ADDSS XMM2, XMM0              ;XMM2=[0, 0, 0, (v1-v2)*(v1-v2)]
+          	INC ESI
+     	JMP ciclofineDistEuclidea
+e7:
+	HADDPS XMM1, XMM1
+	HADDPS XMM1,XMM1   ;somma di tutte le differenze dei quadrati dei multipli di 4
+	ADDSS XMM1, XMM0    ;somma delle differenze dei quadrati rimasti
+
+	SQRTSS XMM1, XMM1 
+
+    	MOVSS [retps], XMM1
+
+	FLD dword [retps]
+   	pop edi 
+    	pop esi
+    	pop ebx
+    	mov esp, ebp 
+    	pop ebp 
+    	ret
 
