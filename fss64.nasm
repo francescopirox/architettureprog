@@ -144,10 +144,10 @@ push		rbp				; salva il Base Pointer
         
 cicloSommaEuclidea:	
 	SUB RDX,4
-	CMP RDX,0
+	;CMP RDX,0
 	JL fineSommaEuclidea	       
         VMOVAPD YMM2,[RSI + RAX]        
-        VSUBPD YMM2,[RDI +RAX]
+        VSUBPD YMM2,[RDI + RAX]
         VMULPD YMM2,YMM2
 	VADDPD YMM1,YMM2
        	ADD RAX,32
@@ -157,7 +157,7 @@ fineSommaEuclidea:
 	ADD RDX,3
 	VXORPD XMM3,XMM3
 cicloFineSommaEuclidea:	
-	CMP R8,0
+	CMP RDX,0
 	JL e1
         VMOVSD XMM2,[RSI+RAX]
         VSUBSD XMM2,[RDI+RAX]
@@ -240,47 +240,49 @@ copyAlnVector:
 	pushaq	
 	
     	
-    	MOV	RCX,	RDX
-    	AND	RDX,	3
+    	MOV	R8,	RSI
+    	AND	R8,	3
     	JZ	modulo4
+    	prints msg
     	PUSH 	RDI
     	PUSH 	RSI
-    	PUSH 	RCX
-    	getmem 8, RCX
+    	PUSH 	RDX
+    	getmem 8, RDX
     	MOV	[cv],	RAX
-    	POP	RCX
+    	POP	RDX
     	POP	RSI
     	POP	RDI
     	
-	XOR	RDX,	RDX
-    	SHL	RCX,	3
-    	ADD	RDI,	RCX
+    	SHL 	RDX,	3
+	XOR	RBX,	RBX
+    	SHL	RSI,	3
+    	ADD	RDI,	RSI
     	
 	
     		
 cicloquozientecopy:
 	
-    	SUB RSI,32					; dim=dim-4
+    	SUB RDX,32					; dim=dim-4
 	;CMP EDI,0
 	JL finecicloquozientecopy
-	VMOVUPD	YMM0,	[RDI+RDX]
-	VMOVAPD	[RAX+RDX],	YMM0
-	ADD	RDX,	32
+	VMOVUPD	YMM0,	[RDI+RBX]
+	VMOVAPD	[RAX+RBX],	YMM0
+	ADD	RBX,	32
 	JMP	cicloquozientecopy
 	
 finecicloquozientecopy:
-	ADD	RSI,	32
+	ADD	RDX,	32
 	ciclorestocopy:
-		SUB 	RSI,	8
+		SUB 	RDX,	8
 		JL	ecopy
-		VMOVSS	XMM0,	[RDI+RDX]
-		VMOVSS	[RAX+RDX],	XMM0
-		ADD 	RDX,	8
+		VMOVSS	XMM0,	[RDI+RBX]
+		VMOVSS	[RAX+RBX],	XMM0
+		ADD 	RBX,	8
 		JMP	ciclorestocopy
 modulo4:
 	
-    	SHL	RCX,	3
-    	ADD	RDI,	RCX
+    	SHL	RSI,	3
+    	ADD	RDI,	RSI
 	MOV	[cv],	RDI	
 	
 ecopy:

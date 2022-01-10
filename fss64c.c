@@ -404,7 +404,9 @@ void movimentoVolitivo(params* input, var* vars){
 	type pesoTotAtt = pesoTot(vars->w,input->np);
 	type pesoTotPre = vars->wbranco;
 	//printf(" wAtt;%f,  wPre%f \n",pesoTotAtt,pesoTotPre );
+	type dist=1.0;
 	if(pesoTotAtt>pesoTotPre){ //segno "-" nell'equazione (il banco si avvicina al baricentro)
+	
 		for(int pesce=0;pesce<np; pesce++){
 			VECTOR v1=copyAlnVector(input->x,pesce*d,d);
 			subVettori(input->x,vars->baricentro,diff,pesce*d,0, d);
@@ -423,7 +425,7 @@ void movimentoVolitivo(params* input, var* vars){
 			VECTOR v1=copyAlnVector(input->x,pesce*d,d);
 			subVettori(v1,vars->baricentro,diff,0,0, d);
 			//type* dist = get_block(sizeof(type),1);
-            		type dist=distEuclideaAsm(v1, vars->baricentro,d);
+            		//type dist=distEuclideaAsm(v1, vars->baricentro,d);
           
 			for(int i=0;i<d;i++){
 				if(dist>EPSILON || dist<-EPSILON){

@@ -420,7 +420,6 @@ void baricentro(params* input, var* vars){
 	free_block(num);
 }
 
-
 void movimentoVolitivo(params* input, var* vars){
 	VECTOR diff = get_block(sizeof(type),input->d);
 	type pesoTotAtt = pesoTot(vars->w,input->np);
