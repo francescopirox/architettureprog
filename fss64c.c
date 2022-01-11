@@ -358,7 +358,7 @@ void movimentoIstintivo(params* input, var* vars){
 			//printf("I: %f,%f,%f,%f,%f,%f,%f \n", I[0],I[1],I[2],I[3],I[4],I[5],I[6]);
 //per ogni pesce
 			for(int pesce=0; pesce<input->np; pesce++){
-				VECTOR ris=malloc(sizeof(type)*d);
+				VECTOR ris=get_block(sizeof(type),d);
 				VECTOR v=copyAlnVector(input->x,pesce*d,d);
 				addVettori(v,I,ris,d);
 				//printf("Nuove coordinate pesce %d dopo mov Instintivo: ",pesce);
@@ -484,13 +484,13 @@ void fss(params* input){
     init(input,vars);
     while (it<iter){
         for(int pesce=0;pesce<np;pesce++){
-            movimentoIndividuale(input,vars,pesce);
+        //movimentoIndividuale(input,vars,pesce);
         }
-        alimentazione(input,vars);
+       // alimentazione(input,vars);
         movimentoIstintivo(input,vars);
-        baricentro(input,vars);
-       	movimentoVolitivo(input,vars);
-        aggiornaParametri(input,vars);    
+        //baricentro(input,vars);
+       	//movimentoVolitivo(input,vars);
+        //aggiornaParametri(input,vars);    
     	it+=1;
     }
     minimo(input);
@@ -701,6 +701,16 @@ int main(int argc, char** argv) {
 	//
 	// Fish School Search
 	//
+	/*VECTOR v=get_block(sizeof(type),8);
+	VECTOR v2=get_block(sizeof(type),8);
+	VECTOR v1=get_block(sizeof(type),8);
+	for(int i=0;i<8;i++){
+		v1[i]=1.0*i;
+		v2[i]=1.0*i;
+		v[i]=0;
+	}*/
+	//prodVet_x_Scalare(v1,-2.0,v,8);
+//	printf("%f ",prodScalare(v1,v2,8));
 
 	t = clock();
 	fss(input);

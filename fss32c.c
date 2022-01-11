@@ -499,12 +499,12 @@ void fss(params* input){
         
         alimentazione(input,vars);
         movimentoIstintivo(input,vars);
-       	baricentro(input,vars);
+       baricentro(input,vars);
         movimentoVolitivo(input,vars);
        	aggiornaParametri(input,vars);    
     	it+=1;
     }
-    minimo(input);
+    //minimo(input);
 }
 
 int main(int argc, char** argv) {

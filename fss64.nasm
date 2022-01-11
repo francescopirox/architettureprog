@@ -322,8 +322,8 @@ cicloaddVettori:
 	JMP 			cicloaddVettori
 	
 fineaddVettori:
-	ADD 		RCX, 4			;dim +=4? o 3?
-	VXORPD 		YMM1,YMM1		;YMM1=[0, 0, 0, 0]
+	ADD 		RCX, 3			;dim +=4? o 3?
+	;VXORPD 		YMM1,YMM1		;YMM1=[0, 0, 0, 0]
 	
 ciclofineaddVettori:
 	CMP 			RCX, 0			;dim==0?
@@ -366,8 +366,8 @@ ciclosubVettori:
 	JMP 			ciclosubVettori
 	
 finesubVettori:
-	ADD 		RCX, 4			;dim +=4? o 3?
-	VXORPD 		YMM1,YMM1		;YMM1=[0, 0, 0, 0]
+	ADD 		RCX, 3			;dim +=4? o 3?
+	;VXORPD 		YMM1,YMM1		;YMM1=[0, 0, 0, 0]
 	
 ciclofinesubVettori:
 	CMP 			RCX, 0			;dim==0?
@@ -400,7 +400,7 @@ prodVet_x_Scalare:
 	; RDX = dim
 	
 	XOR 		RAX,RAX
-	VBROADCASTSD	YMM0, XMM0
+	;VBROADCASTSD	YMM0, XMM0
 	
 	;VSHUFPD 	YMM0, XMM0, 00000000b	; XMM0 = [S, S, S, S]
 	VXORPD 	YMM3, YMM3
@@ -409,9 +409,9 @@ cicloProdVet_x_Scalare:
 	SUB 		RDX,4					; DIM-4
 	CMP 		RDX,0					; DIM == 0?
 	JL 		fineProdVet_x_Scalare		; se si jumpa all'ultima iterazione
-	VMOVAPD YMM3, [RDI + RAX]			; YMM3 = [V1, V1, V1, V1]
-	VMULPD	YMM3, YMM0				; YMM3 = [V1*S, V1*S, V1*S, V1*S]
-	VMOVAPD [RSI+RAX], YMM3			; LO RIMETTO A POSTO in memoria
+	;VMOVAPD YMM3, [RDI + RAX]			; YMM3 = [V1, V1, V1, V1]
+	;VMULPD	YMM3, YMM0				; YMM3 = [V1*S, V1*S, V1*S, V1*S]
+	;VMOVAPD [RSI+RAX], YMM3			; LO RIMETTO A POSTO in memoria
 	ADD 	RAX,32					; i= i+4
 	JMP 		cicloProdVet_x_Scalare
 
@@ -422,9 +422,9 @@ fineProdVet_x_Scalare:
 ciclofineProdVet_x_Scalare:
 	CMP 		RDX,0					; dim == 0 ?
 	JL 		e5						; se si fine
-        VMOVSD 	XMM3, [RDI + RAX]			; YMM3 = [0, 0, 0, V1]
-	VMULSD	XMM3, XMM0				; YMM3 = [0*S, 0*S, 0*S, V1*S]
-	VMOVSD 	[RSI+RAX], XMM3			; LO RIMETTO A POSTO in memoria
+        ;VMOVSD 	XMM3, [RDI + RAX]			; YMM3 = [0, 0, 0, V1]
+	;VMULSD	XMM3, XMM0				; YMM3 = [0*S, 0*S, 0*S, V1*S]
+	;VMOVSD 	[RSI+RAX], XMM3			; LO RIMETTO A POSTO in memoria
 	SUB 		RDX,1					; dim--
 	ADD 	RAX,8					; i++
 	JMP 		ciclofineProdVet_x_Scalare
@@ -456,9 +456,9 @@ cicloProdScalare:
 	SUB 		RDX,4						; DIM-4
 	CMP 		RDX,0						; DIM == 0?
 	JL 		fineProdScalare				; se si jumpa all'ultima iterazione
-	VMOVAPD XMM0, [RDI + RAX]				; YMM0 = [V1, V1, V1, V1]
-	VMULPD	XMM0, [RSI + RAX]				; YMM0 = [V1*V2, V1*V2, V1*V2, V1*V2]
-	VADDPD	XMM1, XMM0
+	VMOVAPD YMM0, [RDI + RAX]				; YMM0 = [V1, V1, V1, V1]
+	VMULPD	YMM0, [RSI + RAX]				; YMM0 = [V1*V2, V1*V2, V1*V2, V1*V2]
+	VADDPD	YMM1, YMM0
 	ADD 	RAX,32						; i= i+4
 	JMP 		cicloProdScalare
 
@@ -477,12 +477,14 @@ ciclofineProdScalare:
 	JMP 		ciclofineProdScalare
 
 e6:
-	VHADDPD 	XMM1, XMM1
-	VHADDPD 	XMM1, XMM1
-	VADDSD 		XMM2, XMM1
-	VEXTRACTF128 XMM0, YMM2, 1b 			;<-------
+	VHADDPD 	YMM1, YMM1
+	VEXTRACTF128 	XMM3, YMM1, 1b 
 	
-	VMOVSD 		[risSommaEu], XMM0
+	VADDSD 		XMM1, XMM3
+	VADDSD 		XMM2, XMM1
+	;VEXTRACTF128 XMM0, YMM2, 1b 			;<-------
+	
+	VMOVSD 		[risSommaEu], XMM2
 
 	popaq								; ripristina i registri generali
 	mov			rsp, 	rbp					; ripristina lo Stack Pointer
