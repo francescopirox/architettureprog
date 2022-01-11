@@ -40,7 +40,8 @@ alignb 32
 de		resq		1
 alignb 32
 risSommaEu	resq		1
-
+alignb 32
+prova1	resq		4
 alignb 32
 cv	resq		1
 
@@ -292,4 +293,200 @@ ecopy:
 	pop		rbp		; ripristina il Base Pointer
 	MOV 	RAX,	[cv]
 	ret				; torna alla funzione C chiamante
+
+
+
+;--------------------
+global addVettori
+
+addVettori:
+	push		rbp				
+	mov			rbp, rsp			
+	pushaq	
+	
+	;RDI=v1
+	;RSI=v2
+	;RDX=ris
+	;RCX=dim
+	
+	XOR 			RAX,RAX			;i=0
+	
+cicloaddVettori:
+	SUB 			RCX, 4			;dim=dim-4
+	CMP 			RCX, 0			;dim==0?
+	JL 			fineaddVettori
+	VMOVAPD 	YMM1, [RDI + RAX] 	;YMM1=[V1, V1, V1, V1]
+	VADDPD 		YMM1, [RSI + RAX]	;YMM1=[V1+V2, V1+V2, V1+V2, V1+V2]
+	VMOVAPD 	[RDX + RAX], YMM1	; metto nel vettore ris i 4 double
+	ADD 		RAX, 32			; i+=4
+	JMP 			cicloaddVettori
+	
+fineaddVettori:
+	ADD 		RCX, 4			;dim +=4? o 3?
+	VXORPD 		YMM1,YMM1		;YMM1=[0, 0, 0, 0]
+	
+ciclofineaddVettori:
+	CMP 			RCX, 0			;dim==0?
+	JL 			e3
+	VMOVSD 		XMM1, [RDI + RAX] 	;YMM1=[0, 0, 0, V1]
+	VADDSD 		XMM1, [RSI + RAX]	;YMM1=[0, 0, 0, V1+V2]
+	VMOVSD 		[RDX + RAX], XMM1  ;metto il risultato in ris
+	SUB 			RCX, 1			;dim--
+	ADD 		RAX, 8			;i++
+	JMP 			ciclofineaddVettori
+	
+e3:
+	popaq					
+	mov			rsp, rbp	
+	pop			rbp
+	ret
+;---------------------------------------------------
+global subVettori
+
+subVettori:
+	push		rbp				
+	mov			rbp, rsp			
+	pushaq	
+	
+	;RDI=v1
+	;RSI=v2
+	;RDX=ris
+	;RCX=dim
+	
+	XOR 			RAX,RAX			;i=0
+	
+ciclosubVettori:
+	SUB 			RCX, 4			;dim=dim-4
+	CMP 			RCX, 0			;dim==0?
+	JL 			finesubVettori
+	VMOVAPD 	YMM1, [RDI + RAX] 	;YMM1=[V1, V1, V1, V1]
+	VSUBPD 		YMM1, [RSI + RAX]	;YMM1=[V1-V2, V1-V2, V1-V2, V1-V2]
+	VMOVAPD 	[RDX + RAX], YMM1	; metto nel vettore ris i 4 double
+	ADD 		RAX, 32			; i+=4
+	JMP 			ciclosubVettori
+	
+finesubVettori:
+	ADD 		RCX, 4			;dim +=4? o 3?
+	VXORPD 		YMM1,YMM1		;YMM1=[0, 0, 0, 0]
+	
+ciclofinesubVettori:
+	CMP 			RCX, 0			;dim==0?
+	JL 			e4
+	VMOVSD 		XMM1, [RDI + RAX] 	;YMM1=[0, 0, 0, V1]
+	VSUBSD 		XMM1, [RSI + RAX]	;YMM1=[0, 0, 0, V1-V2]
+	VMOVSD 		[RDX + RAX], XMM1  ;metto il risultato in ris
+	SUB 			RCX, 1			;dim--
+	ADD 		RAX, 8			;i++
+	JMP 			ciclofinesubVettori
+	
+e4:
+	popaq					
+	mov			rsp, rbp	
+	pop			rbp
+	ret
+
+;------------------------------------------------------------------
+
+global prodVet_x_Scalare
+
+prodVet_x_Scalare:
+	push		rbp
+	mov			rbp, rsp				; il Base Pointer punta al Record di Attivazione corrente
+	pushaq							; salva i registri generali
+	
+	; RDI = v1
+	; XMM0 = S
+	; RSI = ris
+	; RDX = dim
+	
+	XOR 		RAX,RAX
+	VBROADCASTSD	YMM0, XMM0
+	
+	;VSHUFPD 	YMM0, XMM0, 00000000b	; XMM0 = [S, S, S, S]
+	VXORPD 	YMM3, YMM3
+	
+cicloProdVet_x_Scalare:
+	SUB 		RDX,4					; DIM-4
+	CMP 		RDX,0					; DIM == 0?
+	JL 		fineProdVet_x_Scalare		; se si jumpa all'ultima iterazione
+	VMOVAPD YMM3, [RDI + RAX]			; YMM3 = [V1, V1, V1, V1]
+	VMULPD	YMM3, YMM0				; YMM3 = [V1*S, V1*S, V1*S, V1*S]
+	VMOVAPD [RSI+RAX], YMM3			; LO RIMETTO A POSTO in memoria
+	ADD 	RAX,32					; i= i+4
+	JMP 		cicloProdVet_x_Scalare
+
+fineProdVet_x_Scalare:
+	ADD 	RDX,3					; dim=dim+4
+	VXORPD 	YMM3,YMM3
+	
+ciclofineProdVet_x_Scalare:
+	CMP 		RDX,0					; dim == 0 ?
+	JL 		e5						; se si fine
+        VMOVSD 	XMM3, [RDI + RAX]			; YMM3 = [0, 0, 0, V1]
+	VMULSD	XMM3, XMM0				; YMM3 = [0*S, 0*S, 0*S, V1*S]
+	VMOVSD 	[RSI+RAX], XMM3			; LO RIMETTO A POSTO in memoria
+	SUB 		RDX,1					; dim--
+	ADD 	RAX,8					; i++
+	JMP 		ciclofineProdVet_x_Scalare
+
+e5:
+	popaq							; ripristina i registri generali
+	mov		rsp, rbp					; ripristina lo Stack Pointer
+	pop		rbp						; ripristina il Base Pointer
+			
+	ret								; torna alla funzione C chiamante
+;--------------------------------------------------
+
+global prodScalare
+
+prodScalare:
+	push		rbp
+	mov			rbp, rsp		; il Base Pointer punta al Record di Attivazione corrente
+	pushaq					; salva i registri generali
+	
+	; XMM0 prima ora RDI  = v1
+	; XMM1 prima ora RSI  = v2
+	; RDX = dim
+	
+	XOR 		RAX,RAX
+	VXORPD 	YMM1, YMM1
+	VXORPD 	YMM2, YMM2			;contatore
+	
+cicloProdScalare:
+	SUB 		RDX,4						; DIM-4
+	CMP 		RDX,0						; DIM == 0?
+	JL 		fineProdScalare				; se si jumpa all'ultima iterazione
+	VMOVAPD XMM0, [RDI + RAX]				; YMM0 = [V1, V1, V1, V1]
+	VMULPD	XMM0, [RSI + RAX]				; YMM0 = [V1*V2, V1*V2, V1*V2, V1*V2]
+	VADDPD	XMM1, XMM0
+	ADD 	RAX,32						; i= i+4
+	JMP 		cicloProdScalare
+
+fineProdScalare:
+	ADD 	RDX,3						; dim=dim+4
+	VXORPD 	YMM0, YMM0
+	
+ciclofineProdScalare:
+	CMP 		RDX,0						; dim == 0 ?
+	JL 		e6							; se si fine
+        VMOVSD 	XMM0, [RDI + RAX]				; YMM0 = [0, 0, 0, V1]
+	VMULSD	XMM0, [RSI + RAX]				; YMM0 = [0*V2, 0*V2, 0*V2, V1*V2]
+	VADDSD	XMM2, XMM0				
+	SUB 		RDX,1						; dim--
+	ADD 	RAX,8						; i++
+	JMP 		ciclofineProdScalare
+
+e6:
+	VHADDPD 	XMM1, XMM1
+	VHADDPD 	XMM1, XMM1
+	VADDSD 		XMM2, XMM1
+	VEXTRACTF128 XMM0, YMM2, 1b 			;<-------
+	
+	VMOVSD 		[risSommaEu], XMM0
+
+	popaq								; ripristina i registri generali
+	mov			rsp, 	rbp					; ripristina lo Stack Pointer
+	pop			rbp						; ripristina il Base Pointer
+	VMOVSD 		XMM0, [risSommaEu] 
+	ret									; torna alla funzione C chiamante
 
