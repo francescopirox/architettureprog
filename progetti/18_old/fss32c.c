@@ -1,4 +1,4 @@
-/**************************************************************************************
+/**********
 * 
 * CdL Magistrale in Ingegneria Informatica
 * Corso di Architetture e Programmazione dei Sistemi di Elaborazione - a.a. 2020/21
@@ -8,7 +8,7 @@
 * 
 * Fabrizio Angiulli, aprile 2019
 * 
-**************************************************************************************/
+**********/
 
 /*
 * 
@@ -51,8 +51,7 @@
 #define	MATRIX		type*
 #define	VECTOR		type*
 
-
-#define EPSILON 0.00000001
+#define EPSILON 0.0000001
 
 typedef struct {
 	MATRIX x; //posizione dei pesci
@@ -70,21 +69,20 @@ typedef struct {
 } params;
 
 typedef struct {
-	VECTOR w;
-	VECTOR deltaf;
-	VECTOR deltax;
-	VECTOR baricentro;
-	int rand;
-	type wbranco;
-	type stepindIni; //parametro stepind
-	type stepvolIni; //parametro stepvol
+    VECTOR w;
+    VECTOR deltaf;
+    VECTOR deltax;
+    VECTOR baricentro;
+    int rand;
+    type wbranco;
+    type stepindIni; //parametro stepind
+    type stepvolIni; //parametro stepvol
 }var;
 
 int np;
 int d;
 int iter;
-int effettuato;
-int allineamento=4;
+
 /*
 * 
 *	Le funzioni sono state scritte assumento che le matrici siano memorizzate 
@@ -128,10 +126,10 @@ void dealloc_matrix(MATRIX mat) {
 * 	successivi 4 byte: numero di colonne (M) --> numero intero
 * 	successivi N*M*4 byte: matrix data in row-major order --> numeri floating-point a precisione singola
 * 
-*****************************************************************************
+*********
 *	Se lo si ritiene opportuno, è possibile cambiare la codifica in memoria
 * 	della matrice. 
-*****************************************************************************
+*********
 * 
 */
 MATRIX load_data(char* filename, int *n, int *k) {
@@ -194,35 +192,54 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 extern void prova(params* input);
-extern void addVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim);
-extern void subVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim);
-extern type distEuclidea(VECTOR v1, VECTOR v2, int dim);
-extern VECTOR copyAlnVector(VECTOR v, int inizio, int dim);
-extern type pesoTot(VECTOR v, int dim);
-extern void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int dim);
-extern type prodScalare(VECTOR v1, VECTOR v2,int dim);
-///////////
+//extern void addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim);
 
-VECTOR copyAlnVector(VECTOR v, int inizio, int dim){
-	VECTOR ret=get_block(sizeof(type),dim);
-	for(int i=0;i<dim;i++){
-		ret[i]=v[i+inizio];
+type prodScalare(VECTOR v1, VECTOR v2,int inizio1,int inizio2,int dim){
+	type ris=0.0;
+	for(int i =0; i<dim; i++){
+		ris+=v1[inizio1+i]*v2[inizio2+i];
 	}
-	return ret;	
+	return ris;
 }
 
-/*
-void addVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim){
-	for(int i =0; i<dim; i++)
-		ris[i]=v1[i]+v2[i];
+
+void subVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim){
+	for(int i =0; i<dim; i++){
+		ris[i]=v1[i+inizio1]-v2[i+inizio2];
+	}
+	//return ris;
 }
 
-type distEuclidea(VECTOR v1, VECTOR v2, int dim){
+void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int inizio,int dim){	
+	for(int i =0; i<dim; i++){
+		ris[i]=v1[i+inizio]*s;
+		//printf(" v[i+inizio] %f, x %f = %f \n \n \n",v1[i],s,ris[i]);
+	}
+}
+
+void addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim){
+	for(int i =0; i<dim; i++){
+		ris[i]=v1[i+inizio1]+v2[i+inizio2];
+	}
+}
+
+type funzione(VECTOR vettore,params* input,int inizio,int dim){
+	type x2 = prodScalare(vettore,vettore,inizio,inizio,dim);
+	type ex2 =(type)exp(x2);
+	type cx = prodScalare(input->c,vettore,0,inizio,dim);
+	
+	//printf("%f,%f, %f \n", ex2, x2, cx);
+	return ex2+x2-cx;
+}
+
+
+
+type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim){
 	type v=0;
 	for(int i=0;i<dim;i++){
-		v+= ((v2[i]-v1[i])*(v2[i]-v1[i]));
+		v+= ((v2[i+inizio2]-v1[i+inizio1])*(v2[i+inizio2]-v1[i+inizio1]));
 	}
-	return (type)sqrt(v);
+	return (type)sqrtf(v);
 }
 
 type pesoTot(VECTOR v, int dim){
@@ -233,197 +250,12 @@ type pesoTot(VECTOR v, int dim){
 	return tmp;
 }
 
-void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int dim){	
-	for(int i =0; i<dim; i++){
-		ris[i]=v1[i]*s;
-	}
-}
-
-type prodScalare(VECTOR v1, VECTOR v2,int dim){
-	type ris=0.0;
-	for(int i =0; i<dim; i++){
-		ris+=v1[i]*v2[i];
-	}
-	return ris;
-}
-
-
-void subVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim){
-	for(int i =0; i<dim; i++){
-		ris[i]=v1[i]-v2[i];
-	}
-}*/
-
-type funzione(VECTOR vettore,params* input,int dim){
-	type x2 = prodScalare(vettore,vettore,dim);
-	type ex2 =(type)exp(x2);
-	type cx = prodScalare(input->c,vettore,dim);
-	
-	return ex2+x2-cx;
-}
-
-type funzioneMatrix(MATRIX matrice,params* input,int inizio,int dim){
-    //VECTOR vettore=matrice+inizio*dim*sizeof(type);
-    VECTOR vettore=copyAlnVector(matrice,inizio,dim);
-	type ret=funzione(vettore,input,dim);
-	return ret;
-
-}
-
-type getRand(params* input,var* vars){
-	return input->r[vars->rand++];
-}
-
-void addMatriceVettore(MATRIX matrix,VECTOR vector,int riga,int d){
-
-	for(int i=0;i<d;i++){
-		matrix[riga*d+i]+=vector[i];
-	}
-}
-
-void addMatriceVettoreBroad(MATRIX matrix,VECTOR vector,int d){
-	for(int pesce=0;pesce<np;pesce++)
-		for(int i=0;i<d;i++){
-			matrix[pesce*d+i]+=vector[i];
-		}
-}
-
-void prodTrasMatVet(MATRIX matrix,VECTOR vector, VECTOR ris, int righe,int dim){
-	for(int i=0;i<dim;i++){
-		ris[i]=0;
-	}
-	for(int pesce=0;pesce<righe;pesce++)
-		for(int i=0;i<dim;i++){
-			ris[i]+=matrix[pesce*dim+i]*vector[i];
-		}
-}
-
-type minimoVettore(VECTOR vector,int dim){
-	int index=0;
-	type min=vector[0];
-	for(int i=0;i<dim;i++){
-		if(vector[i]<min){
-			index=i;
-			min=(vector[i]);
-		}
-	}
-	return vector[index];
-}
-
-void zeroRowMatrix(MATRIX matrix, int riga, int dim){
-	for(int i=0;i<dim; i++){
-		matrix[riga*dim+i]=0;
-	}//for
-}//zero
-
-void replaceMatrixRowVector(MATRIX matrix,VECTOR vector,int riga, int dim){
-	for(int i=0;i<dim; i++){
-		matrix[riga*dim+i]=vector[i];
-	}//for
-}
-
-void generaPosizioneCasuale(VECTOR pos,MATRIX posPesci,int pesce,int dim,params* input,var* vars ){
-	for(int i=0;i<dim; i++){
-		pos[i]=posPesci[pesce*dim+i]+(getRand(input,vars)*2-1)*input->stepind;
-	}//for
-}
-
-
-
-///////////
-
-
-void movimentoIndividuale(params* input,var* vars,int pesce){
-    VECTOR newPosition=get_block(sizeof(type),d);
-    generaPosizioneCasuale(newPosition,input->x,pesce,d,input,vars);
-    type deltaf= funzione(newPosition,input,d)-funzioneMatrix(input->x ,input,pesce*d,d);  
-    if(deltaf<0){
-        effettuato=1;
-        vars->deltaf[pesce]=deltaf;
-        VECTOR x_i=copyAlnVector(input->x,pesce*d,d);
-        //VECTOR x_i=input->x+pesce*d*sizeof(type);
-        VECTOR deltax_i=get_block(sizeof(type),d);
-        subVettori(newPosition,x_i,deltax_i,d);
-        replaceMatrixRowVector(vars->deltax,deltax_i,pesce,d);
-        replaceMatrixRowVector(input->x,newPosition,pesce,d);
-        //if((pesce*d%allineamento)!=0)
-            //free_block(x_i);
-        //free_block(deltax_i);
-    }//if
-    else{
-        zeroRowMatrix(vars->deltax,pesce,d);
-        vars->deltaf[pesce]=0;
-    }//else
-    free_block(newPosition);
-}//
-
-void alimentazione(params* input, var* vars){
-    vars-> wbranco=pesoTot(vars->w,np);
-    //printf("%f ", vars->wbranco);
-    if(effettuato){
-        type max=-minimoVettore(vars->deltaf,np);
-        if(max>EPSILON){
-        	    VECTOR ris=get_block(sizeof(type),np);
-            	prodVet_x_Scalare(vars->deltaf,(type)1.0/max,ris,np);
-            	subVettori(vars->w,ris,vars->w, np);
-            	free_block(ris);
-        }//if
-    }//if
-}//alimentazione
-
-void movimentoIstintivo(params* input, var* vars){
-    if(effettuato){
-        VECTOR I= get_block(sizeof(type),d);
-        VECTOR num= get_block(sizeof(type),d);
-        prodTrasMatVet(vars->deltax,vars->deltaf,num,np,d);
-        type denom=(type)1.0/pesoTot(vars->deltaf,np);
-        if(denom>EPSILON || denom<EPSILON){
-            prodVet_x_Scalare(num,denom,I,d);
-            addMatriceVettoreBroad(input->x,I,d);
-        }//if
-        free_block(I);
-        free_block(num);	      
-    }//if
-}//mov istintivo
-
-void baricentro(params* input, var* vars){
-    type denom=(type)1.0/pesoTot(vars->w,np);
-    prodTrasMatVet(input->x,vars->w,vars->baricentro,np,d);
-    prodVet_x_Scalare(vars->baricentro,denom,vars->baricentro,d);
-}//baricentro
-
-void movimentoVolitivo(params* input, var* vars){ 
-    int segno=1;
-    if(pesoTot(vars->w,np)>vars->wbranco){
-        segno=-1;
-        //printf("pesoAumentato.");
-    }
-    VECTOR ris=get_block(sizeof(type),d);
-    VECTOR volVec=get_block(sizeof(type),d);
-    for(int pesce =0;pesce <np ;pesce++){
-        type rnd=getRand(input,vars);
-        VECTOR x_i=copyAlnVector(input->x,pesce*d,d);
-        type distanza=distEuclidea(x_i,vars->baricentro,d);
-        type scalare=(input->stepvol*rnd*(type)segno)/distanza;
-        subVettori(x_i,vars->baricentro,ris,d);
-        prodVet_x_Scalare(ris,scalare,volVec,d);
-        addMatriceVettore(input->x,volVec,pesce,d);
-        if((pesce*d%allineamento)!=0){
-            free_block(x_i);
-        }  
-    }//for 
-    free_block(ris);    
-    free_block(volVec);      
-}//movimentoVolitivo
-
-void minimo(params* input){
-	type valore_minimo = funzioneMatrix(input->x, input, 0, d); 
+void minimo(params* input){	
+	type valore_minimo = funzione(input->x, input, 0, d); 
 	int index = 0;
-    
 	for(int i=0; i<np; i++){
-		type valore_tmp = funzioneMatrix(input->x, input, i, d); 
-		//printf("valore_tmp:%f ",valore_tmp);
-        if(valore_tmp<valore_minimo){
+		type valore_tmp = funzione(input->x, input, i*d, d); 
+		if(valore_tmp<valore_minimo){
 			valore_minimo=valore_tmp;
 			index=i;
 		}
@@ -433,13 +265,182 @@ void minimo(params* input){
 	}	
 }
 
+
+void movimentoIndividuale(params* input,var* vars,int pesce){
+    VECTOR newPosition= get_block(sizeof(type),d);
+    for(int i=0;i<d;i++){
+        newPosition[i]=input->x[pesce*d+i] + ((2* (input->r[vars->rand]))-1)*input->stepind;
+        vars->rand=vars->rand+1;
+       // printf("pesce %d, vecchio valore di x%d, %f, nuovo %f \n",pesce,i,input->x[pesce*input->d+i],newPosition[i]);     
+    }
+    type deltaf=(funzione(newPosition,input,(int)0,d))-funzione((VECTOR)input->x,input,pesce*d,d);
+
+    if(deltaf<-EPSILON){
+    	printf("effettuato movimento Individuale \n");
+        VECTOR ris=get_block(sizeof(type),d);
+        subVettori(newPosition,(VECTOR)input->x,ris,0,pesce*d,d);
+        for(int i=0;i<d;i++){
+    		input->x[pesce*d+i]=newPosition[i]; //ciclo di copia  
+    	}  
+        vars->deltaf[pesce]=deltaf; //assegnamento
+       	//printf("deltaf %f \n",deltaf);
+        for(int i=0;i<d;i++){        
+        	vars->deltax[pesce*d+i]= ris[i];
+        	
+        }
+        free_block(ris);
+    }else{
+    	vars->deltaf[pesce]=0;
+        for(int i=0; i< d;i++){
+    	    vars->deltax[pesce*d+i]=0;
+    	}
+    }
+    free_block(newPosition);
+}	
+
+void alimentazione(params* input, var* vars){
+    vars->wbranco=0;
+    type max=fabs((double)vars->deltaf[0]);
+    for(int pesce=0;pesce<np;pesce+=1){
+    	vars->wbranco+=vars->w[pesce];
+        //printf("deltaf x max %f \n",vars->deltaf[pesce]);
+        if(fabs((double)vars->deltaf[pesce])>max)
+            max=fabs((double)vars->deltaf[pesce]);
+    }
+    if(!(max<EPSILON&&max>-EPSILON)){
+   	//printf("max deltaf %f \n",max);
+   	for(int pesce=0;pesce<np;pesce+=1){
+   		vars->w[pesce]=vars->w[pesce]- vars->deltaf[pesce]/max; //- al posto di +
+   	}//for
+    }//if
+}//alimentazione
+
+
+void movimentoIstintivo(params* input, var* vars){
+//CALCOLO LA SOMMATORIA da 1 a n di deltax(vettore) per deltaf(scalare) 
+		VECTOR num = get_block(sizeof(type),input->d);
+		VECTOR I= get_block(sizeof(type),input->d);
+		//ciclo di inizializzazione di I
+		for(int i=0; i<d; i++){
+			I[i]=0;
+			num[i]=0;
+		}//ciclo azzeramento
+		for(int i=0; i<input->np; i++){
+            for(int i=0; i<d; i++){
+			//I[i]=0;
+			num[i]=0;
+		}//ciclo azzeramento
+			prodVet_x_Scalare(vars->deltax,vars->deltaf[i],num,i*d, d);//il risultato va in contatore
+			for(int k=0; k<d; k++){
+				//printf("%f ",vars->deltax[k]);
+				}
+			//addVettori(VECTOR v1,VECTOR v2, VECTOR ris,int inizio1, int inizio2, int dim)  <----
+			addVettori(I,num,I,0,0,d);
+		}
+	
+		type sommaDeltaf=0.0;
+		for(int i=0; i<np; i++){
+			if(vars->deltaf[i]>EPSILON || vars->deltaf[i]<-EPSILON)
+			//printf("deltaf considerati :%f \n", vars->deltaf[i]);
+			sommaDeltaf+=vars->deltaf[i];
+		}
+		//printf("somma deltaf %f \n", sommaDeltaf);
+		if(sommaDeltaf>EPSILON || sommaDeltaf<-EPSILON){
+			printf("movimento istintivo \n");
+			prodVet_x_Scalare(I, (type)1.0/sommaDeltaf, I, 0, d);
+			printf("I: %f,%f,%f,%f,%f,%f,%f \n", I[0],I[1],I[2],I[3],I[4],I[5],I[6]);
+//per ogni pesce
+			for(int pesce=0; pesce<input->np; pesce++){
+				VECTOR ris=malloc(sizeof(type)*d);
+				addVettori(input->x,I,ris,pesce*d,0,d);
+				//printf("Nuove coordinate pesce %d dopo mov Instintivo: ",pesce);
+				for(int i=0;i < d; i++){
+					input->x[pesce*d+i]=ris[i];
+					//printf("%f " ,ris[i] );
+				}
+	}
+	}//if
+	free_block(num);
+	free_block(I); 
+	
+}//mov istintivo
+
+void baricentro(params* input, var* vars){
+	//int dim = input->np*d;
+	
+	VECTOR prod_tmp= get_block(sizeof(type),input->d);
+	VECTOR num= get_block(sizeof(type),input->d);
+	for(int i=0; i<input->d;i++){
+		num[i]=0;
+		prod_tmp[i]=0;
+	}
+	
+	type denominatore=0;
+	//mi muovo a blocchi di d su x 
+	for(int i=0; i<np; i++){
+		//prodVet_x_Scalare(VECTOR v1, int s, VECTOR ris, int inizio,int fine)
+		prodVet_x_Scalare(input->x,vars->w[i],prod_tmp,i*d,d);//<-- Problema su x
+		for(int i=0; i<input->d;i++){
+		
+		//printf("%f ",prod_tmp[i]);
+		}
+		//printf("\n");
+		addVettori(num, prod_tmp, num,0, 0, d);//num(vettore)=valore corrente+ prod_tmp
+	}
+
+	for(int i =0; i<input->np; i++){
+		denominatore += vars->w[i];
+	}
+	prodVet_x_Scalare(num, (type)1/denominatore, vars->baricentro, 0, d);
+	//printf("Baricentro: %f,%f,%f,%f,%f,%f,%f,%f \n",vars->baricentro[0],vars->baricentro[1],vars->baricentro[2],vars->baricentro[3],vars->baricentro[4],vars->baricentro[5],vars->baricentro[6],vars->baricentro[7]);
+	free_block(prod_tmp);
+	free_block(num);
+}
+
+
+void movimentoVolitivo(params* input, var* vars){
+	VECTOR diff = get_block(sizeof(type),input->d);
+	type pesoTotAtt = pesoTot(vars->w,input->np);
+	type pesoTotPre = vars->wbranco;
+	//printf(" wAtt;%f,  wPre%f \n",pesoTotAtt,pesoTotPre );
+	if(pesoTotAtt>pesoTotPre){ //segno "-" nell'equazione (il banco si avvicina al baricentro)
+		for(int pesce=0;pesce<np; pesce++){
+			subVettori(input->x,vars->baricentro,diff,pesce*d,0, d);
+			type distEuclidea(VECTOR v1, VECTOR v2, int inizio1, int inizio2, int dim);
+			type dist = distEuclidea(input->x, vars->baricentro,pesce*d,0,d);
+			for(int i=0;i<d;i++){
+                
+				if(dist>EPSILON || dist<-EPSILON){
+				input->x[pesce*d+i]=input->x[pesce*d+i]-input->stepvol* input->r[vars->rand] *(diff[i]/dist);
+				vars->rand++;}
+			}
+	        }
+	}
+	else{ //segno "+" nell'equazione (il banco si allontana dal baricentro)
+		for(int pesce=0;pesce<np; pesce++){
+			subVettori(input->x,vars->baricentro,diff,pesce*d,0, d);
+			type dist = distEuclidea(input->x, vars->baricentro,pesce*d,0,d);
+			for(int i=0;i<d;i++){
+				if(dist>EPSILON || dist<-EPSILON){
+				input->x[pesce*d+i]=input->x[pesce*d+i]+input->stepvol* input->r[vars->rand] *(diff[i]/dist);
+            //printf("%f ",input->x[pesce*d+i]);
+			vars->rand++;}
+			}
+	        }
+	}
+	free_block(diff);
+	
+}
+
+void aggiornaParametri(params* input, var* vars){
+	input->stepind=input->stepind-(vars->stepindIni/iter);
+	input->stepvol=input->stepvol-(vars->stepvolIni/iter);
+}
+
 void init(params* input, var* vars){
-    d=input->d;
-    np=input->np;
-    iter=input->iter;
-    vars->w=get_block(sizeof(type),np);
-    vars->deltax=alloc_matrix(np,d);
-    vars->deltaf=get_block(sizeof(type),np);
+    vars->w=get_block(sizeof(type),input->np);
+    vars->deltax=malloc(sizeof(type)*input->np*input->d);
+    vars->deltaf=get_block(sizeof(type),input->np);
     vars->stepindIni=input->stepind;
     vars->stepvolIni=input->stepvol;
     vars->baricentro=get_block(sizeof(type),input->d);
@@ -454,33 +455,37 @@ void init(params* input, var* vars){
     	vars->baricentro[i]=0;
     	input->xh[i]=0;
     }
-  
+    d=input->d;
+    np=input->np;
+    iter=input->iter;
 }
-
-void aggiornaParametri(params* input, var* vars){
-	input->stepind=input->stepind-(vars->stepindIni/iter);
-	input->stepvol=input->stepvol-(vars->stepvolIni/iter);
+void printpesci(params* input){
+    for(int pesce=0;pesce<np;pesce++){
+        printf("pesce %d val: %f \n",pesce,funzione(input->x,input,pesce*d,d) );
+    }
 }
-
 
 void fss(params* input){
     int it =0;   
     var* vars=get_block(sizeof(var),1);
     init(input,vars);
     while (it<iter){
-     	effettuato=0;
+        if(it>10)
+        printf("iterazione: %d \n \n \n \n",it);
         for(int pesce=0;pesce<np;pesce++){
             movimentoIndividuale(input,vars,pesce);
         }
-        
         alimentazione(input,vars);
         movimentoIstintivo(input,vars);
         baricentro(input,vars);
         movimentoVolitivo(input,vars);
         aggiornaParametri(input,vars);
+        if(it>1240)
+            printpesci(input);    
     	it+=1;
     }
-    minimo(input);	
+    printpesci(input);  
+    minimo(input);
 }
 
 int main(int argc, char** argv) {
@@ -493,6 +498,7 @@ int main(int argc, char** argv) {
 	clock_t t;
 	float time;
 	
+    
 	//
 	// Imposta i valori di default dei parametri
 	//
@@ -634,7 +640,7 @@ int main(int argc, char** argv) {
 		printf("Missing initial fish position file name!\n");
 		exit(1);
 	}
-
+    
 	int x,y;
 	input->c = load_data(coefffilename, &input->d, &y);
 	input->r = load_data(randfilename, &x, &y);
@@ -670,6 +676,7 @@ int main(int argc, char** argv) {
 	//
 
 	if(!input->silent){
+        
 		printf("Coefficient file name: '%s'\n", coefffilename);
 		printf("Random numbers file name: '%s'\n", randfilename);
 		printf("Initial fish position file name: '%s'\n", xfilename);

@@ -128,10 +128,10 @@ prova:
 		ret				; torna alla funzione C chiamante
 
 
-global distEuclidea 
+global distEuclideaAsm 
 	
 	
-distEuclidea:
+distEuclideaAsm:
 push		rbp				; salva il Base Pointer
 		mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
 		pushaq						; salva i registri generali
@@ -233,9 +233,9 @@ e2:
 	
 ;---------------------------------
 
-global copyAlnVectorAsm
+global copyAlnVector
 
-copyAlnVectorAsm:
+copyAlnVector:
 	push		rbp				; salva il Base Pointer
 	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
 	pushaq	
@@ -409,9 +409,9 @@ cicloProdVet_x_Scalare:
 	SUB 		RDX,4					; DIM-4
 	CMP 		RDX,0					; DIM == 0?
 	JL 		fineProdVet_x_Scalare		; se si jumpa all'ultima iterazione
-	VMOVAPD YMM3, [RDI + RAX]			; YMM3 = [V1, V1, V1, V1]
-	VMULPD	YMM3, YMM0				; YMM3 = [V1*S, V1*S, V1*S, V1*S]
-	VMOVAPD [RSI+RAX], YMM3			; LO RIMETTO A POSTO in memoria
+	;VMOVAPD YMM3, [RDI + RAX]			; YMM3 = [V1, V1, V1, V1]
+	;VMULPD	YMM3, YMM0				; YMM3 = [V1*S, V1*S, V1*S, V1*S]
+	;VMOVAPD [RSI+RAX], YMM3			; LO RIMETTO A POSTO in memoria
 	ADD 	RAX,32					; i= i+4
 	JMP 		cicloProdVet_x_Scalare
 
@@ -422,9 +422,9 @@ fineProdVet_x_Scalare:
 ciclofineProdVet_x_Scalare:
 	CMP 		RDX,0					; dim == 0 ?
 	JL 		e5						; se si fine
-    VMOVSD 	XMM3, [RDI + RAX]			; YMM3 = [0, 0, 0, V1]
-	VMULSD	XMM3, XMM0				; YMM3 = [0*S, 0*S, 0*S, V1*S]
-	VMOVSD 	[RSI+RAX], XMM3			; LO RIMETTO A POSTO in memoria
+        ;VMOVSD 	XMM3, [RDI + RAX]			; YMM3 = [0, 0, 0, V1]
+	;VMULSD	XMM3, XMM0				; YMM3 = [0*S, 0*S, 0*S, V1*S]
+	;VMOVSD 	[RSI+RAX], XMM3			; LO RIMETTO A POSTO in memoria
 	SUB 		RDX,1					; dim--
 	ADD 	RAX,8					; i++
 	JMP 		ciclofineProdVet_x_Scalare

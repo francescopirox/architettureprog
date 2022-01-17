@@ -4,7 +4,7 @@
 * Corso di Architetture e Programmazione dei Sistemi di Elaborazione - a.a. 2020/21
 * 
 * Progetto dell'algoritmo Fish School Search 221 231 a
-* in linguaggio assembly x86-32 + SSE
+* in linguaggio assembly x86-64 + SSE
 * 
 * Fabrizio Angiulli, aprile 2019
 * 
@@ -26,16 +26,16 @@
 * 
 * potrebbe essere necessario installare le seguenti librerie:
 * 
-*    sudo apt-get install lib32gcc-4.8-dev (o altra versione)
+*    sudo apt-get install lib64gcc-4.8-dev (o altra versione)
 *    sudo apt-get install libc6-dev-i386
 * 
 * Per generare il file eseguibile:
 * 
-* nasm -f elf32 fss32.nasm && gcc -m32 -msse -O0 -no-pie sseutils32.o fss32.o fss32c.c -o fss32c -lm && ./fss32c $pars
+* nasm -f elf64 fss64.nasm && gcc -m64 -msse -O0 -no-pie sseutils64.o fss64.o fss64c.c -o fss64c -lm && ./fss64c $pars
 * 
 * oppure
 * 
-* ./runfss32
+* ./runfss64
 * 
 */
 
@@ -47,12 +47,10 @@
 #include <libgen.h>
 #include <xmmintrin.h>
 
-#define	type		float
+#define	type		double
 #define	MATRIX		type*
 #define	VECTOR		type*
-
-
-#define EPSILON 0.00000001
+#define EPSILON 0.000000001
 
 typedef struct {
 	MATRIX x; //posizione dei pesci
@@ -85,12 +83,13 @@ int d;
 int iter;
 int effettuato;
 int allineamento=4;
+
 /*
 * 
 *	Le funzioni sono state scritte assumento che le matrici siano memorizzate 
-* 	mediante un array (float*), in modo da occupare un unico blocco
+* 	mediante un array (double*), in modo da occupare un unico blocco
 * 	di memoria, ma a scelta del candidato possono essere 
-* 	memorizzate mediante array di array (float**).
+* 	memorizzate mediante array di array (double**).
 * 
 * 	In entrambi i casi il candidato dovrà inoltre scegliere se memorizzare le
 * 	matrici per righe (row-major order) o per colonne (column major-order).
@@ -100,7 +99,7 @@ int allineamento=4;
 */
 
 void* get_block(int size, int elements) { 
-	return _mm_malloc(elements*size,16); 
+	return _mm_malloc(elements*size,32); 
 }
 
 void free_block(void* p) { 
@@ -126,7 +125,7 @@ void dealloc_matrix(MATRIX mat) {
 * 	Codifica del file:
 * 	primi 4 byte: numero di righe (N) --> numero intero
 * 	successivi 4 byte: numero di colonne (M) --> numero intero
-* 	successivi N*M*4 byte: matrix data in row-major order --> numeri floating-point a precisione singola
+* 	successivi N*M*4 byte: matrix data in row-major order --> numeri doubleing-point a precisione singola
 * 
 *****************************************************************************
 *	Se lo si ritiene opportuno, è possibile cambiare la codifica in memoria
@@ -166,9 +165,9 @@ MATRIX load_data(char* filename, int *n, int *k) {
 *	come matrice di N righe e M colonne
 * 
 * 	Codifica del file:
-* 	primi 4 byte: numero di righe (N) --> numero intero a 32 bit
-* 	successivi 4 byte: numero di colonne (M) --> numero intero a 32 bit
-* 	successivi N*M*4 byte: matrix data in row-major order --> numeri interi o floating-point a precisione singola
+* 	primi 4 byte: numero di righe (N) --> numero intero a 64 bit
+* 	successivi 4 byte: numero di colonne (M) --> numero intero a 64 bit
+* 	successivi N*M*4 byte: matrix data in row-major order --> numeri interi o doubleing-point a precisione singola
 */
 void save_data(char* filename, void* X, int n, int k) {
 	FILE* fp;
@@ -194,15 +193,8 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 extern void prova(params* input);
-extern void addVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim);
-extern void subVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim);
-extern type distEuclidea(VECTOR v1, VECTOR v2, int dim);
-extern VECTOR copyAlnVector(VECTOR v, int inizio, int dim);
-extern type pesoTot(VECTOR v, int dim);
-extern void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int dim);
-extern type prodScalare(VECTOR v1, VECTOR v2,int dim);
-///////////
 
+///////////
 VECTOR copyAlnVector(VECTOR v, int inizio, int dim){
 	VECTOR ret=get_block(sizeof(type),dim);
 	for(int i=0;i<dim;i++){
@@ -211,7 +203,7 @@ VECTOR copyAlnVector(VECTOR v, int inizio, int dim){
 	return ret;	
 }
 
-/*
+
 void addVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim){
 	for(int i =0; i<dim; i++)
 		ris[i]=v1[i]+v2[i];
@@ -252,7 +244,7 @@ void subVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim){
 	for(int i =0; i<dim; i++){
 		ris[i]=v1[i]-v2[i];
 	}
-}*/
+}
 
 type funzione(VECTOR vettore,params* input,int dim){
 	type x2 = prodScalare(vettore,vettore,dim);
@@ -263,11 +255,10 @@ type funzione(VECTOR vettore,params* input,int dim){
 }
 
 type funzioneMatrix(MATRIX matrice,params* input,int inizio,int dim){
-    //VECTOR vettore=matrice+inizio*dim*sizeof(type);
     VECTOR vettore=copyAlnVector(matrice,inizio,dim);
 	type ret=funzione(vettore,input,dim);
+	
 	return ret;
-
 }
 
 type getRand(params* input,var* vars){
@@ -341,14 +332,13 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
         effettuato=1;
         vars->deltaf[pesce]=deltaf;
         VECTOR x_i=copyAlnVector(input->x,pesce*d,d);
-        //VECTOR x_i=input->x+pesce*d*sizeof(type);
         VECTOR deltax_i=get_block(sizeof(type),d);
         subVettori(newPosition,x_i,deltax_i,d);
         replaceMatrixRowVector(vars->deltax,deltax_i,pesce,d);
         replaceMatrixRowVector(input->x,newPosition,pesce,d);
-        //if((pesce*d%allineamento)!=0)
-            //free_block(x_i);
-        //free_block(deltax_i);
+        if((pesce*d%allineamento)!=0)
+            free_block(x_i);
+        free_block(deltax_i);
     }//if
     else{
         zeroRowMatrix(vars->deltax,pesce,d);
@@ -416,10 +406,9 @@ void movimentoVolitivo(params* input, var* vars){
     free_block(volVec);      
 }//movimentoVolitivo
 
-void minimo(params* input){
+void minimo(params* input){	
 	type valore_minimo = funzioneMatrix(input->x, input, 0, d); 
 	int index = 0;
-    
 	for(int i=0; i<np; i++){
 		type valore_tmp = funzioneMatrix(input->x, input, i, d); 
 		//printf("valore_tmp:%f ",valore_tmp);
@@ -483,6 +472,7 @@ void fss(params* input){
     minimo(input);	
 }
 
+
 int main(int argc, char** argv) {
 
 	char fname[256];
@@ -491,7 +481,7 @@ int main(int argc, char** argv) {
 	char* xfilename = NULL;
 	int i, j, k;
 	clock_t t;
-	float time;
+	double time;
 	
 	//
 	// Imposta i valori di default dei parametri
@@ -682,7 +672,7 @@ int main(int argc, char** argv) {
 	}
 
 	// COMMENTARE QUESTA RIGA!
-	// prova(input);
+	prova(input);
 	//
 
 	//
@@ -692,7 +682,7 @@ int main(int argc, char** argv) {
 	t = clock();
 	fss(input);
 	t = clock() - t;
-	time = ((float)t)/CLOCKS_PER_SEC;
+	time = ((double)t)/CLOCKS_PER_SEC;
 
 	if(!input->silent)
 		printf("FSS time = %.3f secs\n", time);
@@ -702,7 +692,7 @@ int main(int argc, char** argv) {
 	//
 	// Salva il risultato di xh
 	//
-	sprintf(fname, "xh32_%d_%d_%d.ds2", input->d, input->np, input->iter);
+	sprintf(fname, "xh64_%d_%d_%d.ds2", input->d, input->np, input->iter);
 	save_data(fname, input->xh, 1, input->d);
 	if(input->display){
 		if(input->xh == NULL)

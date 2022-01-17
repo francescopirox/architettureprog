@@ -222,7 +222,6 @@ subVettori:
 			JL fineSubVettori
 			MOVAPS XMM0,[EBX + 4*ESI]
 			SUBPS XMM0,[ECX+4*ESI]
-            ;SUBPS XMM0,XMM1
 			MOVAPS [EDX+4*ESI],XMM0
 			ADD ESI,4	           
         jmp ciclosubvettori
@@ -419,7 +418,7 @@ e5:
     	pop ebp 
     	ret
 ;-------------------------
-global copyAlnVectorAsm
+global copyAlnVector
 
 vcopy	equ	8
 inizio	equ	12
@@ -427,7 +426,7 @@ dimcopy	equ	16
 
 ;msg	db	'stepind:',32,0
 
-copyAlnVectorAsm:
+copyAlnVector:
 	push   ebp
     	mov    ebp, esp
     	push   ebx
@@ -455,8 +454,8 @@ cicloquozientecopy:
     	SUB EDI,4					; dim=dim-4
 	;CMP EDI,0
 	JL finecicloquozientecopy
-	;MOVUPS	XMM0,	[EBX+ESI]
-	;MOVAPS	[EAX+ESI],	XMM0
+	MOVUPS	XMM0,	[EBX+ESI]
+	MOVAPS	[EAX+ESI],	XMM0
 	ADD	ESI,	16
 	JMP	cicloquozientecopy
 	
@@ -471,11 +470,11 @@ finecicloquozientecopy:
 		ADD 	ESI,	4
 		JMP	ciclorestocopy
 modulo4:
-    ;prints msg
+
 	MOV	ECX,	[EBP+inizio]
-    SHL	ECX,	2
-    MOV	EBX,	[EBP+vcopy]
-    ADD	EBX,	ECX
+    	SHL	ECX,	2
+    	MOV	EBX,	[EBP+vcopy]
+    	ADD	EBX,	ECX
 	MOV	EAX,	EBX	
 	
 ecopy:

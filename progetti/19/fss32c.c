@@ -194,15 +194,8 @@ void save_data(char* filename, void* X, int n, int k) {
 // PROCEDURE ASSEMBLY
 
 extern void prova(params* input);
-extern void addVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim);
-extern void subVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim);
-extern type distEuclidea(VECTOR v1, VECTOR v2, int dim);
-extern VECTOR copyAlnVector(VECTOR v, int inizio, int dim);
-extern type pesoTot(VECTOR v, int dim);
-extern void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int dim);
-extern type prodScalare(VECTOR v1, VECTOR v2,int dim);
-///////////
 
+///////////
 VECTOR copyAlnVector(VECTOR v, int inizio, int dim){
 	VECTOR ret=get_block(sizeof(type),dim);
 	for(int i=0;i<dim;i++){
@@ -211,7 +204,7 @@ VECTOR copyAlnVector(VECTOR v, int inizio, int dim){
 	return ret;	
 }
 
-/*
+
 void addVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim){
 	for(int i =0; i<dim; i++)
 		ris[i]=v1[i]+v2[i];
@@ -252,7 +245,7 @@ void subVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim){
 	for(int i =0; i<dim; i++){
 		ris[i]=v1[i]-v2[i];
 	}
-}*/
+}
 
 type funzione(VECTOR vettore,params* input,int dim){
 	type x2 = prodScalare(vettore,vettore,dim);
@@ -263,11 +256,10 @@ type funzione(VECTOR vettore,params* input,int dim){
 }
 
 type funzioneMatrix(MATRIX matrice,params* input,int inizio,int dim){
-    //VECTOR vettore=matrice+inizio*dim*sizeof(type);
     VECTOR vettore=copyAlnVector(matrice,inizio,dim);
 	type ret=funzione(vettore,input,dim);
+	
 	return ret;
-
 }
 
 type getRand(params* input,var* vars){
@@ -341,14 +333,13 @@ void movimentoIndividuale(params* input,var* vars,int pesce){
         effettuato=1;
         vars->deltaf[pesce]=deltaf;
         VECTOR x_i=copyAlnVector(input->x,pesce*d,d);
-        //VECTOR x_i=input->x+pesce*d*sizeof(type);
         VECTOR deltax_i=get_block(sizeof(type),d);
         subVettori(newPosition,x_i,deltax_i,d);
         replaceMatrixRowVector(vars->deltax,deltax_i,pesce,d);
         replaceMatrixRowVector(input->x,newPosition,pesce,d);
-        //if((pesce*d%allineamento)!=0)
-            //free_block(x_i);
-        //free_block(deltax_i);
+        if((pesce*d%allineamento)!=0)
+            free_block(x_i);
+        free_block(deltax_i);
     }//if
     else{
         zeroRowMatrix(vars->deltax,pesce,d);
@@ -416,10 +407,9 @@ void movimentoVolitivo(params* input, var* vars){
     free_block(volVec);      
 }//movimentoVolitivo
 
-void minimo(params* input){
+void minimo(params* input){	
 	type valore_minimo = funzioneMatrix(input->x, input, 0, d); 
 	int index = 0;
-    
 	for(int i=0; i<np; i++){
 		type valore_tmp = funzioneMatrix(input->x, input, i, d); 
 		//printf("valore_tmp:%f ",valore_tmp);
