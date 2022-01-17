@@ -462,7 +462,6 @@ void fss(params* input){
         for(int pesce=0;pesce<np;pesce++){
             movimentoIndividuale(input,vars,pesce);
         }
-        
         alimentazione(input,vars);
         movimentoIstintivo(input,vars);
         baricentro(input,vars);
