@@ -201,9 +201,12 @@ extern VECTOR copyAlnVector(VECTOR v, int inizio, int dim);
 extern type pesoTot(VECTOR v, int dim);
 extern void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int dim);
 extern type prodScalare(VECTOR v1, VECTOR v2,int dim);
+extern void moltiplicazioneVV(VECTOR v1, VECTOR v2, VECTOR ris,int dim);
 ///////////
 
 VECTOR copyAlnVector(VECTOR v, int inizio, int dim){
+    if(inizio % allineamento == 0)
+        return v+inizio;
 	VECTOR ret=get_block(sizeof(type),dim);
 	for(int i=0;i<dim;i++){
 		ret[i]=v[i+inizio];
@@ -217,6 +220,7 @@ void addVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim){
 		ris[i]=v1[i]+v2[i];
 }
 
+/*
 type distEuclidea(VECTOR v1, VECTOR v2, int dim){
 	type v=0;
 	for(int i=0;i<dim;i++){
@@ -224,6 +228,7 @@ type distEuclidea(VECTOR v1, VECTOR v2, int dim){
 	}
 	return (type)sqrt(v);
 }
+
 
 type pesoTot(VECTOR v, int dim){
 	type tmp=0;
@@ -233,11 +238,13 @@ type pesoTot(VECTOR v, int dim){
 	return tmp;
 }
 
+
 void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int dim){	
 	for(int i =0; i<dim; i++){
 		ris[i]=v1[i]*s;
 	}
 }
+
 
 type prodScalare(VECTOR v1, VECTOR v2,int dim){
 	type ris=0.0;
@@ -252,8 +259,10 @@ void subVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim){
 	for(int i =0; i<dim; i++){
 		ris[i]=v1[i]-v2[i];
 	}
-}*/
+}
 
+
+*/
 type funzione(VECTOR vettore,params* input,int dim){
 	type x2 = prodScalare(vettore,vettore,dim);
 	type ex2 =(type)exp(x2);
@@ -293,9 +302,9 @@ void prodTrasMatVet(MATRIX matrix,VECTOR vector, VECTOR ris, int righe,int dim){
 		ris[i]=0;
 	}
 	for(int pesce=0;pesce<righe;pesce++)
-		for(int i=0;i<dim;i++){
-			ris[i]+=matrix[pesce*dim+i]*vector[i];
-		}
+         moltiplicazioneVV((VECTOR) matrix+pesce*dim,vector,ris,dim);
+               
+    
 }
 
 type minimoVettore(VECTOR vector,int dim){

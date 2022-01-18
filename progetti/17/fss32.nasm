@@ -163,19 +163,58 @@ addVettori:
     MOV EBX,[EBP+v1]
     MOV ECX,[EBP+v2]
     MOV EDX,[EBP+ris]
-   
-	cicloaddvettori:SUB EDI,8
+
+    cicloaddvettori8:SUB EDI,32
+			;CMP EDI,0
+			JL cicloaddvettoriold
+			MOVAPS XMM0,[EBX + 4*ESI]
+			ADDPS XMM0,[ECX+4*ESI]
+			MOVAPS [EDX+4*ESI],XMM0
+           
+            MOVAPS XMM1,[EBX + 4*ESI +16]
+			ADDPS XMM1,[ECX+4*ESI +16]
+			MOVAPS [EDX+4*ESI+16],XMM1
+			
+            MOVAPS XMM0,[EBX + 4*ESI+32]
+			ADDPS XMM0,[ECX+4*ESI+32]
+			MOVAPS [EDX+4*ESI+32],XMM0
+           
+            MOVAPS XMM1,[EBX + 4*ESI+48]
+			ADDPS XMM1,[ECX+4*ESI+48]
+			MOVAPS [EDX+4*ESI+48],XMM1
+			
+            MOVAPS XMM0,[EBX + 4*ESI+64]
+			ADDPS XMM0,[ECX+4*ESI+64]
+			MOVAPS [EDX+4*ESI+64],XMM0
+            
+            MOVAPS XMM1,[EBX + 4*ESI+80]
+			ADDPS XMM1,[ECX+4*ESI+80]
+			MOVAPS [EDX+4*ESI+80],XMM1
+			
+            MOVAPS XMM0,[EBX + 4*ESI+96]
+			ADDPS XMM0,[ECX+4*ESI+96]
+			MOVAPS [EDX+4*ESI+96],XMM0
+            
+            MOVAPS XMM1,[EBX + 4*ESI+112]
+			ADDPS XMM1,[ECX+4*ESI+112]
+			MOVAPS [EDX+4*ESI+112],XMM1
+			ADD ESI,32	 	      	           
+        jmp cicloaddvettori8
+    
+    cicloaddvettoriold:
+            ADD EDI, 32
+	cicloaddvettori2:SUB EDI,8
 			;CMP EDI,0
 			JL fineAddVettori
 			MOVAPS XMM0,[EBX + 4*ESI]
 			ADDPS XMM0,[ECX+4*ESI]
 			MOVAPS [EDX+4*ESI],XMM0
-            ADD ESI,4
-            MOVAPS XMM1,[EBX + 4*ESI]
-			ADDPS XMM1,[ECX+4*ESI]
-			MOVAPS [EDX+4*ESI],XMM1
-			ADD ESI,4	           
-        jmp cicloaddvettori
+            ;ADD ESI,4
+            MOVAPS XMM1,[EBX + 4*ESI+16]
+			ADDPS XMM1,[ECX+4*ESI+16]
+			MOVAPS [EDX+4*ESI+16],XMM1
+			ADD ESI,8	           
+        jmp cicloaddvettori2
             
 	fineAddVettori: ADD EDI,8
                     
@@ -221,20 +260,66 @@ subVettori:
     MOV ECX,[EBP+v2]
     MOV EDX,[EBP+ris]
     
-	ciclosubvettori:SUB EDI,8
+    	ciclosubvettori8:SUB EDI,32
+			;CMP EDI,0
+			JL ciclosubvettoriold
+			MOVAPS XMM0,[EBX + 4*ESI]
+			SUBPS XMM0,[ECX+4*ESI]
+            ;SUBPS XMM0,XMM1
+			MOVAPS [EDX+4*ESI],XMM0
+           
+            MOVAPS XMM1,[EBX + 4*ESI +16]
+			SUBPS XMM1,[ECX+4*ESI +16]
+            ;SUBPS XMM0,XMM1
+			MOVAPS [EDX+4*ESI +16],XMM1
+		
+            MOVAPS XMM0,[EBX + 4*ESI +32]
+			SUBPS XMM0,[ECX+4*ESI+32]
+            ;SUBPS XMM0,XMM1
+			MOVAPS [EDX+4*ESI +32],XMM0
+           
+            MOVAPS XMM1,[EBX + 4*ESI+48]
+			SUBPS XMM1,[ECX+4*ESI+48]
+            ;SUBPS XMM0,XMM1
+			MOVAPS [EDX+4*ESI+48],XMM1
+			
+            MOVAPS XMM0,[EBX + 4*ESI+64]
+			SUBPS XMM0,[ECX+4*ESI+64]
+            ;SUBPS XMM0,XMM1
+			MOVAPS [EDX+4*ESI+64],XMM0
+           
+            MOVAPS XMM1,[EBX + 4*ESI+80]
+			SUBPS XMM1,[ECX+4*ESI+80]
+            ;SUBPS XMM0,XMM1
+			MOVAPS [EDX+4*ESI+80],XMM1
+			
+            MOVAPS XMM0,[EBX + 4*ESI+96]
+			SUBPS XMM0,[ECX+4*ESI+96]
+            ;SUBPS XMM0,XMM1
+			MOVAPS [EDX+4*ESI+96],XMM0
+          
+            MOVAPS XMM1,[EBX + 4*ESI+112]
+			SUBPS XMM1,[ECX+4*ESI+112]
+            ;SUBPS XMM0,XMM1
+			MOVAPS [EDX+4*ESI+112],XMM1
+			ADD ESI,32	   	     	   	           
+        jmp ciclosubvettori8
+    ciclosubvettoriold:
+            ADD EDI,32
+	ciclosubvettori2:SUB EDI,8
 			;CMP EDI,0
 			JL fineSubVettori
 			MOVAPS XMM0,[EBX + 4*ESI]
 			SUBPS XMM0,[ECX+4*ESI]
             ;SUBPS XMM0,XMM1
 			MOVAPS [EDX+4*ESI],XMM0
-            ADD ESI,4
-            MOVAPS XMM1,[EBX + 4*ESI]
-			SUBPS XMM1,[ECX+4*ESI]
+            ;ADD ESI,4
+            MOVAPS XMM1,[EBX + 4*ESI+16]
+			SUBPS XMM1,[ECX+4*ESI+16]
             ;SUBPS XMM0,XMM1
-			MOVAPS [EDX+4*ESI],XMM1
-			ADD ESI,4	           
-        jmp ciclosubvettori
+			MOVAPS [EDX+4*ESI+16],XMM1
+			ADD ESI,8	           
+        jmp ciclosubvettori2
             
 	fineSubVettori: ADD EDI,8
                     
@@ -282,29 +367,76 @@ prodVet_x_Scalare:
 	;XORPS	XMM0, XMM0
 	SHUFPS 	XMM0, XMM0, 00000000b	; XMM0 = [S, S, S, S]
 
-cicloProdVet_x_Scalare:
+cicloProdVet_x_Scalare8:
+	SUB 		EDI,32					; DIM-4
+	;CMP 		EDI,0					; DIM == 0?
+	JL 		cicloProdVet_x_Scalareold		; se si jumpa all'ultima iterazione
+	
+    MOVAPS 	XMM1,[EDX + 4*ESI]		; XMM1 = [V1, V1, V1, V1]
+	MULPS	XMM1, XMM0				; XMM1 = [V1*S, V1*S, V1*S, V1*S]
+	MOVAPS 	[EBX+ 4*ESI], XMM1
+	
+
+    MOVAPS 	XMM2,[EDX + 4*ESI+16]		; XMM1 = [V1, V1, V1, V1]
+	MULPS	XMM2, XMM0				; XMM1 = [V1*S, V1*S, V1*S, V1*S]
+	MOVAPS 	[EBX+ 4*ESI+16], XMM2
+	
+
+    MOVAPS 	XMM3,[EDX + 4*ESI+32]		; XMM1 = [V1, V1, V1, V1]
+	MULPS	XMM3, XMM0				; XMM1 = [V1*S, V1*S, V1*S, V1*S]
+	MOVAPS 	[EBX+ 4*ESI+32], XMM3
+	
+
+    MOVAPS 	XMM4,[EDX + 4*ESI+48]		; XMM1 = [V1, V1, V1, V1]
+	MULPS	XMM4, XMM0				; XMM1 = [V1*S, V1*S, V1*S, V1*S]
+	MOVAPS 	[EBX+ 4*ESI+48], XMM4
+				
+
+    MOVAPS 	XMM5,[EDX + 4*ESI +64]		; XMM1 = [V1, V1, V1, V1]
+	MULPS	XMM5, XMM0				; XMM1 = [V1*S, V1*S, V1*S, V1*S]
+	MOVAPS 	[EBX+ 4*ESI+ 64], XMM5
+					; i= i+4
+
+    MOVAPS 	XMM6,[EDX + 4*ESI + 80]		; XMM1 = [V1, V1, V1, V1]
+	MULPS	XMM6, XMM0				; XMM1 = [V1*S, V1*S, V1*S, V1*S]
+	MOVAPS 	[EBX+ 4*ESI + 80], XMM6
+
+
+    MOVAPS 	XMM5,[EDX + 4*ESI +96]		; XMM1 = [V1, V1, V1, V1]
+	MULPS	XMM5, XMM0				; XMM1 = [V1*S, V1*S, V1*S, V1*S]
+	MOVAPS 	[EBX+ 4*ESI + 96], XMM5
+
+
+    MOVAPS 	XMM6,[EDX + 4*ESI +112]		; XMM1 = [V1, V1, V1, V1]
+	MULPS	XMM6, XMM0				; XMM1 = [V1*S, V1*S, V1*S, V1*S]
+	MOVAPS 	[EBX+ 4*ESI +112], XMM6
+	ADD 	ESI,32
+					
+	JMP 	cicloProdVet_x_Scalare8
+cicloProdVet_x_Scalareold:
+    ADD EDI,    32
+cicloProdVet_x_Scalare2:
 	SUB 		EDI,8					; DIM-4
 	;CMP 		EDI,0					; DIM == 0?
 	JL 		fineProdVet_x_Scalare		; se si jumpa all'ultima iterazione
 	MOVAPS 	XMM1,[EDX + 4*ESI]		; XMM1 = [V1, V1, V1, V1]
 	MULPS	XMM1, XMM0				; XMM1 = [V1*S, V1*S, V1*S, V1*S]
-	MOVUPS 	[EBX+ 4*ESI], XMM1
-	ADD 	ESI,4					; i= i+4
+	MOVAPS 	[EBX+ 4*ESI], XMM1
 
-    MOVAPS 	XMM2,[EDX + 4*ESI]		; XMM1 = [V1, V1, V1, V1]
+    MOVAPS 	XMM2,[EDX + 4*ESI+16]		; XMM1 = [V1, V1, V1, V1]
 	MULPS	XMM2, XMM0				; XMM1 = [V1*S, V1*S, V1*S, V1*S]
-	MOVUPS 	[EBX+ 4*ESI], XMM2
-	ADD 	ESI,4					; i= i+4
-	JMP 	cicloProdVet_x_Scalare
+	MOVUPS 	[EBX+ 4*ESI+16], XMM2
+	ADD 	ESI,8					; i= i+4
+	JMP 	cicloProdVet_x_Scalare2
 
 fineProdVet_x_Scalare:
-	ADD 	EDI,4					; dim=dim+4
+	ADD 	EDI,8					; dim=dim+4
 
 ciclofineProdVet_x_Scalare:
 	SUB 		EDI,1					; dim=dim-1
-	CMP 		EDI,0					; dim==0?
+	;CMP 		EDI,0					; dim==0?
 	JL 		e3						; se si ho finito e faccio le pop dei registri dallo stack
-	XORPS	XMM1, XMM1				; XMM1 = [0,0,0,0]
+	;XORPS	XMM1, XMM1				; XMM1 = [0,0,0,0]
 	MOVSS 	XMM1,[EDX+4*ESI]			; XMM1 = [0,0,0,v1[i]]
 	MULSS 	XMM1, XMM0				; XMM1 = [0*S, 0*S, 0*S, v1[i]*S]
 	MOVSS 	[EBX+4*ESI], XMM1
@@ -342,23 +474,47 @@ prodScalare:
 
 	
 	XORPS 	XMM1,	XMM1			; XMM1=0 IL MIO CONTATORE DOVE OGNI V
-	
-cicloprodScalare:	
+
+cicloprodScalare8:	
+	SUB 	EDI,    16				; DIM-4
+	;CMP 	EDI,    0				; DIM == 0?
+	JL 		cicloprodScalarold		; se si jumpa all'ultima iterazione
+	MOVAPS 	XMM0,	[EBX + 4*ESI]		; XMM0 = [V1, V1, V1, V1]
+	MULPS	XMM0,	[ECX + 4*ESI]		; XMM0 = [V1*V2, V1*V2, V1*V2, V1*V2]
+	ADDPS 	XMM1,	XMM0					;
+    
+    MOVAPS 	XMM2,	[EBX + 4*ESI+16]		; XMM0 = [V1, V1, V1, V1]
+	MULPS	XMM2,	[ECX + 4*ESI+16]		; XMM0 = [V1*V2, V1*V2, V1*V2, V1*V2]
+	ADDPS 	XMM1,	XMM2
+    
+    MOVAPS 	XMM3,	[EBX + 4*ESI +32]		; XMM0 = [V1, V1, V1, V1]
+	MULPS	XMM3,	[ECX + 4*ESI +32]		; XMM0 = [V1*V2, V1*V2, V1*V2, V1*V2]
+	ADDPS 	XMM1,	XMM3					;i= i+4
+
+    MOVAPS 	XMM4,	[EBX + 4*ESI+48]		; XMM0 = [V1, V1, V1, V1]
+	MULPS	XMM4,	[ECX + 4*ESI+48]		; XMM0 = [V1*V2, V1*V2, V1*V2, V1*V2]
+	ADDPS 	XMM1,	XMM4
+
+	ADD 	ESI,16					;i= i+4
+    JMP cicloprodScalare8
+
+cicloprodScalarold:
+	ADD EDI, 16
+cicloprodScalare2:	
 	SUB 	EDI,    8				; DIM-4
 	;CMP 	EDI,    0				; DIM == 0?
 	JL 		fineProdScalare			; se si jumpa all'ultima iterazione
 	MOVAPS 	XMM0,	[EBX + 4*ESI]		; XMM0 = [V1, V1, V1, V1]
 	MULPS	XMM0,	[ECX + 4*ESI]		; XMM0 = [V1*V2, V1*V2, V1*V2, V1*V2]
-	ADDPS 	XMM1,	XMM0
-	ADD 	ESI,4					;i= i+4
-    MOVAPS 	XMM2,	[EBX + 4*ESI]		; XMM0 = [V1, V1, V1, V1]
-	MULPS	XMM2,	[ECX + 4*ESI]		; XMM0 = [V1*V2, V1*V2, V1*V2, V1*V2]
+	ADDPS 	XMM1,	XMM0					;i= i+4
+    MOVAPS 	XMM2,	[EBX + 4*ESI+16]		; XMM0 = [V1, V1, V1, V1]
+	MULPS	XMM2,	[ECX + 4*ESI+16]		; XMM0 = [V1*V2, V1*V2, V1*V2, V1*V2]
 	ADDPS 	XMM1,	XMM2
-	ADD 	ESI,4					;i= i+4
-    JMP cicloprodScalare
+	ADD 	ESI,8					;i= i+4
+    JMP cicloprodScalare2
             
 fineProdScalare: 
-	ADD 	EDI,	4					;dim=dim+4
+	ADD 	EDI,	8					;dim=dim+4
 	XORPS	XMM3,	XMM3    
 ciclofineProdScalare:	
 	SUB 	EDI,	1					;dim=dim-1
@@ -409,13 +565,13 @@ cicloPesoTot:
 	;CMP EDI,0					; dim==0?
     JL  	finePesoTot					; se si vado a stop
 	ADDPS XMM0, [EBX+ ESI*4]		; XMM0 = [v,v,v,v]
-    ADD ESI, 4					; i=i+4
-    ADDPS XMM0, [EBX+ ESI*4]		; XMM0 = [v,v,v,v]
-    ADD ESI, 4					; i=i+4
+    					; i=i+4
+    ADDPS XMM0, [EBX+ ESI*4+16]		; XMM0 = [v,v,v,v]
+    ADD ESI, 8					; i=i+4
 	JMP cicloPesoTot	
 	
 finePesoTot: 
-	ADD EDI, 4
+	ADD EDI, 8
 	
 ciclofinePesoTot: 
 	SUB EDI,1					; dim--
@@ -439,7 +595,7 @@ e5:
     	pop ebp 
     	ret
 ;-------------------------
-global copyAlnVectorAsm
+global copyAlnVector
 
 vcopy	equ	8
 inizio	equ	12
@@ -514,7 +670,7 @@ global distEuclidea
        	v1 equ 8
 
 distEuclidea: 
-	push   ebp
+	    push   ebp
     	mov    ebp, esp
     	push   ebx
     	push   esi
@@ -530,21 +686,21 @@ cicloDistEuclidea:
 	SUB EDI,8
     CMP EDI,0
     JL  fineDistEuclidea
-    MOVUPS XMM0,[EAX+ESI*4]      ;XMM0=[v1, v1, v1, v1]
 
+    MOVUPS XMM0,[EAX+ESI*4]      ;XMM0=[v1, v1, v1, v1]
 	SUBPS XMM0, [EBX+ESI*4]        ;XMM0=[v1-v2, v1-v2, v1-v2, v1-v2]
 	MULPS XMM0, XMM0  ;XMM0=[v1-v2*v1-v2, v1-v2*v1-v2, v1-v2*v1-v2, v1-v2*v1-v2]
 	ADDPS XMM1, XMM0    ;sommo le differenze dei quadrati sulle celle di XMM1
-    ADD ESI, 4
-    MOVUPS XMM2,[EAX+ESI*4]      ;XMM0=[v1, v1, v1, v1]
-    SUBPS XMM2, [EBX+ESI*4]        ;XMM0=[v1-v2, v1-v2, v1-v2, v1-v2]
+   
+    MOVUPS XMM2,[EAX+ESI*4+16]      ;XMM0=[v1, v1, v1, v1]
+    SUBPS XMM2, [EBX+ESI*4+16]        ;XMM0=[v1-v2, v1-v2, v1-v2, v1-v2]
 	MULPS XMM2, XMM2  ;XMM0=[v1-v2*v1-v2, v1-v2*v1-v2, v1-v2*v1-v2, v1-v2*v1-v2]
 	ADDPS XMM1, XMM2    ;sommo le differenze dei quadrati sulle celle di XMM1
-    ADD ESI, 4
+    ADD ESI, 8
     JMP cicloDistEuclidea
 fineDistEuclidea:
     XORPS XMM2, XMM2  ;registro per le somme restanti 
-	ADD EDI, 4
+	ADD EDI, 8
 
 ciclofineDistEuclidea: 
 	SUB EDI,1
@@ -570,6 +726,85 @@ e7:
     	pop esi
     	pop ebx
     	mov esp, ebp 
-    	pop ebp 
+    	pop  ebp 
+    	ret
+;_________________
+
+global moltiplicazioneVV
+
+v1 equ 8
+v2 equ 12
+ris equ 16
+dim equ 20
+
+moltiplicazioneVV:
+    push   ebp
+    mov    ebp, esp
+  	push   ebx
+  	push   esi
+  	push   edi
+
+    XOR ESI,ESI
+    MOV EDI,    [ebp+dim]
+    MOV EAX,    [ebp+v1]
+    MOV EBX,    [ebp + v2]
+    MOV ECX,    [ebp + ris]
+cicloqmvv4:
+    SUB EDI,    16
+    JL  cicloold
+    MOVUPS  XMM1,   [EAX +4*ESI]        
+    MULPS   XMM1,   [EBX +4*ESI]
+    ADDPS   XMM1,   [ECX +4*ESI]
+    MOVAPS  [ECX +4*ESI],   XMM1
+    MOVUPS  XMM2,   [EAX +4*ESI +16]        
+    MULPS   XMM2,   [EBX +4*ESI +16]
+    ADDPS   XMM2,   [ECX +4*ESI +16]
+    MOVAPS  [ECX +4*ESI +16],   XMM2
+    MOVUPS  XMM1,   [EAX +4*ESI +32]        
+    MULPS   XMM1,   [EBX +4*ESI +32]
+    ADDPS   XMM1,   [ECX +4*ESI +32]
+    MOVAPS  [ECX +4*ESI +32],   XMM1
+    MOVUPS  XMM2,   [EAX +4*ESI +48]        
+    MULPS   XMM2,   [EBX +4*ESI +48]
+    ADDPS   XMM2,   [ECX +4*ESI +48]
+    MOVAPS  [ECX +4*ESI +48],   XMM2
+    ADD ESI,    16
+    JMP cicloqmvv4
+cicloold:
+    ADD EDI,16
+cicloqmvv2:
+    SUB EDI,    8
+    JL  ciclor
+    MOVUPS  XMM1,   [EAX +4*ESI]        
+    MULPS   XMM1,   [EBX +4*ESI]
+    ADDPS   XMM1,   [ECX +4*ESI]
+    MOVAPS  [ECX +4*ESI],   XMM1
+    MOVUPS  XMM1,   [EAX +4*ESI +16]        
+    MULPS   XMM1,   [EBX +4*ESI +16]
+    ADDPS   XMM1,   [ECX +4*ESI +16]
+    MOVAPS  [ECX +4*ESI +16],   XMM1
+    ADD ESI,    8
+    JMP cicloqmvv2
+ciclor:
+    ADD EDI, 4
+loopr:    
+    SUB EDI, 1
+    JL e10
+    MOVSS   XMM1,   [EAX +4*ESI]        
+    MULSS   XMM1,   [EBX +4*ESI]
+    ADDSS   XMM1,   [ECX +4*ESI]
+    MOVSS  [ECX +4*ESI],   XMM1
+    ADD ESI,    1
+    JMP loopr
+e10:
+    pop edi 
+    	pop esi
+    	pop ebx
+    	mov esp, ebp 
+    	pop  ebp 
     	ret
 
+
+    
+    
+        

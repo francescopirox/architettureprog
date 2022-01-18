@@ -417,7 +417,7 @@ void minimo(params* input){
 	type valore_minimo = funzioneMatrix(input->x, input, 0, d); 
 	int index = 0;
 	for(int i=0; i<np; i++){
-		type valore_tmp = funzioneMatrix(input->x, input, i, d); 
+		type valore_tmp = funzioneMatrix(input->x, input, i*d, d); 
 		//printf("valore_tmp:%f ",valore_tmp);
         if(valore_tmp<valore_minimo){
 			valore_minimo=valore_tmp;

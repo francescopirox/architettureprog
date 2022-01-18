@@ -215,7 +215,7 @@ type distEuclidea(VECTOR v1, VECTOR v2, int dim){
 	for(int i=0;i<dim;i++){
 		v+= ((v2[i]-v1[i])*(v2[i]-v1[i]));
 	}
-	return (type)sqrt(v);
+	return (type)sqrtf(v);
 }
 
 type pesoTot(VECTOR v, int dim){
@@ -258,7 +258,7 @@ type funzione(VECTOR vettore,params* input,int dim){
 type funzioneMatrix(MATRIX matrice,params* input,int inizio,int dim){
     VECTOR vettore=copyAlnVector(matrice,inizio,dim);
 	type ret=funzione(vettore,input,dim);
-	
+	//deallocare vettore
 	return ret;
 }
 
@@ -352,11 +352,11 @@ void alimentazione(params* input, var* vars){
     vars-> wbranco=pesoTot(vars->w,np);
     //printf("%f ", vars->wbranco);
     if(effettuato){
-        type max=-minimoVettore(vars->deltaf,np);
-        if(max>EPSILON){
+        type max=minimoVettore(vars->deltaf,np);
+        if(max<-EPSILON){
         	    VECTOR ris=get_block(sizeof(type),np);
             	prodVet_x_Scalare(vars->deltaf,(type)1.0/max,ris,np);
-            	subVettori(vars->w,ris,vars->w, np);
+            	addVettori(vars->w,ris,vars->w, np);
             	free_block(ris);
         }//if
     }//if
@@ -368,7 +368,7 @@ void movimentoIstintivo(params* input, var* vars){
         VECTOR num= get_block(sizeof(type),d);
         prodTrasMatVet(vars->deltax,vars->deltaf,num,np,d);
         type denom=(type)1.0/pesoTot(vars->deltaf,np);
-        if(denom>EPSILON || denom<EPSILON){
+        if(1.0/denom>EPSILON || 1.0/denom<EPSILON){
             prodVet_x_Scalare(num,denom,I,d);
             addMatriceVettoreBroad(input->x,I,d);
         }//if
@@ -378,7 +378,7 @@ void movimentoIstintivo(params* input, var* vars){
 }//mov istintivo
 
 void baricentro(params* input, var* vars){
-    type denom=(type)1.0/pesoTot(vars->w,np);
+    type denom=(type)1.0/vars->wbranco;//pesoTot(vars->w,np);
     prodTrasMatVet(input->x,vars->w,vars->baricentro,np,d);
     prodVet_x_Scalare(vars->baricentro,denom,vars->baricentro,d);
 }//baricentro
@@ -411,7 +411,7 @@ void minimo(params* input){
 	type valore_minimo = funzioneMatrix(input->x, input, 0, d); 
 	int index = 0;
 	for(int i=0; i<np; i++){
-		type valore_tmp = funzioneMatrix(input->x, input, i, d); 
+		type valore_tmp = funzioneMatrix(input->x, input, i*d, d); 
 		//printf("valore_tmp:%f ",valore_tmp);
         if(valore_tmp<valore_minimo){
 			valore_minimo=valore_tmp;
