@@ -559,7 +559,24 @@ pesoTot:
     	MOV EBX, [EBP+v]				; EBX = v
     	XORPS XMM0, XMM0				; XMM0 = [0,0,0,0]
     	XORPS XMM1, XMM1				; XMM1 = [0,0,0,0]
+
+cicloPesoTot4: 
+	SUB EDI,16					; dim=dim-4
+	;CMP EDI,0					; dim==0?
+    JL  	cicloPesoTotOld					; se si vado a stop
+	ADDPS XMM0, [EBX+ ESI*4]		; XMM0 = [v,v,v,v]
+    					; i=i+4
+    ADDPS XMM0, [EBX+ ESI*4+16]		; XMM0 = [v,v,v,v]
+    ADDPS XMM0, [EBX+ ESI*4+32]		; XMM0 = [v,v,v,v]
+    					; i=i+4
+    
+    ADDPS XMM0, [EBX+ ESI*4+112]		; XMM0 = [v,v,v,v]
+    ADD ESI, 16					; i=i+4
+	JMP cicloPesoTot4	
 	
+
+cicloPesoTotOld:
+    ADD EDI,16
 cicloPesoTot: 
 	SUB EDI,8					; dim=dim-4
 	;CMP EDI,0					; dim==0?

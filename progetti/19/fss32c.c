@@ -286,7 +286,7 @@ void prodTrasMatVet(MATRIX matrix,VECTOR vector, VECTOR ris, int righe,int dim){
 	}
 	for(int pesce=0;pesce<righe;pesce++)
 		for(int i=0;i<dim;i++){
-			ris[i]+=matrix[pesce*dim+i]*vector[i];
+			ris[i]+=matrix[pesce*dim+i]*vector[pesce];
 		}
 }
 
