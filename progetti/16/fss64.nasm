@@ -221,7 +221,7 @@ e1:
 	ret
 ;_____________________________
 
-global pesoTot
+global pesoTot 
 	
 	
 pesoTot:
@@ -229,43 +229,63 @@ pesoTot:
 	mov		rbp, rsp			; il Base Pointer punta al Record di Attivazione corrente
 	pushaq						; salva i registri generali
 		
-		;inserire cicli
-		
-        VXORPD YMM1,YMM1
-        XOR RAX,RAX
+	VXORPD YMM1,YMM1
+    XOR RAX,RAX
+	
 cicloPesoTot:	
-	SUB RSI,4
+	SUB RSI,16
 	CMP RSI,0
-	JL finePesoTot	       
-        VADDPD YMM1,[RDI + RAX]        
-       	ADD RAX,32
-       	JMP cicloPesoTot
+	JL ciclopeso_mezzi      
+    VADDPD YMM1,[RDI + RAX*8]
 
+	VADDPD YMM1,[RDI + RAX*8+32]
+		
+	VADDPD YMM1,[RDI + RAX*8+64]
+		
+	VADDPD YMM1,[RDI + RAX*8+96]
+		
+    ADD RAX,16
+    JMP cicloPesoTot
+	
+ciclopeso_mezzi:
+	ADD RSI, 16
+	
+cicloPesoTot_mezzi:
+	SUB RSI, 8 
+	CMP RSI, 0 
+	JL finePesoTot
+	
+	VADDPD YMM1,[RDI + RAX*8]
+
+	VADDPD YMM1,[RDI + RAX*8+32]
+	
+	ADD RAX, 8
+	JMP cicloPesoTot_mezzi
+	
 finePesoTot:
-	ADD RSI,3
+	ADD RSI,8
 	VXORPD XMM2,XMM2
 	
 cicloFinePesoTot:	
-	CMP RSI,0
-	JL e2
-        VADDSD XMM2,[RDI+RAX]	
 	SUB RSI,1
-	ADD RAX,8
+	JL e2
+    VADDSD XMM2,[RDI+RAX*8]	
+	ADD RAX,1
 	JMP cicloFinePesoTot
 	
 e2:     
 	VHADDPD YMM1,YMM1
-        VEXTRACTF128 XMM0,YMM1,1b ;<-------
-        VADDPD XMM0,XMM1
-        VADDPD XMM0,XMM2
-        VMOVSD [de],XMM0 
+    VEXTRACTF128 XMM0,YMM1,1b ;<-------
+    VADDPD XMM0,XMM1
+    VADDPD XMM0,XMM2
+    VMOVSD [de],XMM0 
        
       
 	popaq				; ripristina i registri generali
 	mov		rsp, rbp	; ripristina lo Stack Pointer
 	pop		rbp		; ripristina il Base Pointer
 	VMOVSD XMM0,[de] 
-	ret				; torna alla funzione C chiamante
+	ret
 	
 	
 ;---------------------------------
