@@ -83,7 +83,7 @@ int d;
 int iter;
 int effettuato;
 int allineamento=4;
-
+int allineamentoPerfetto=0;
 /*
 * 
 *	Le funzioni sono state scritte assumento che le matrici siano memorizzate 
@@ -199,16 +199,35 @@ extern type prodScalare(VECTOR v1, VECTOR v2,int dim);
 extern void subVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim);
 extern void addVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim);
 extern void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int dim);
-
+extern void prodVet_x_ScalareUn(VECTOR v1, type s, VECTOR ris, int dim);
 ///////////
 
 VECTOR copyAlnVector(VECTOR v, int inizio, int dim){
     if(inizio % allineamento == 0)
         return v+inizio;
 	VECTOR ret=get_block(sizeof(type),dim);
-	for(int i=0;i<dim;i++){
+    int unrolling=16;
+    int i=0;
+	for(i=0;i+unrolling<dim;i+=unrolling){
 		ret[i]=v[i+inizio];
+        ret[i+1]=v[i+inizio+1];
+        ret[i+2]=v[i+inizio+2];
+        ret[i+3]=v[i+inizio+3];
+        ret[i+4]=v[i+inizio+4];
+        ret[i+5]=v[i+inizio+5];
+        ret[i+6]=v[i+inizio+6];
+        ret[i+7]=v[i+inizio+7];
+	    ret[i+8]=v[i+inizio+8];
+        ret[i+9]=v[i+inizio+9];
+        ret[i+10]=v[i+inizio+10];
+        ret[i+11]=v[i+inizio+11];
+        ret[i+12]=v[i+inizio+12];
+        ret[i+13]=v[i+inizio+13];
+        ret[i+14]=v[i+inizio+14];
+        ret[i+15]=v[i+inizio+15];
 	}
+    for(;i<dim;i++)
+        ret[i]=v[i+inizio];
 	return ret;	
 }
 
@@ -218,7 +237,7 @@ void addVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim){
 		ris[i]=v1[i]+v2[i];
 }
 
-/*
+
 type distEuclidea(VECTOR v1, VECTOR v2, int dim){
 	type v=0;
 	for(int i=0;i<dim;i++){
@@ -227,7 +246,7 @@ type distEuclidea(VECTOR v1, VECTOR v2, int dim){
 	return (type)sqrt(v);
 }
 
-
+/*
 type pesoTot(VECTOR v, int dim){
 	type tmp=0;
 	for(int i=0; i<dim;i++){
@@ -235,15 +254,20 @@ type pesoTot(VECTOR v, int dim){
 	}
 	return tmp;
 }
-
-
+*/
+/*
 void prodVet_x_Scalare(VECTOR v1, type s, VECTOR ris, int dim){	
 	for(int i =0; i<dim; i++){
 		ris[i]=v1[i]*s;
 	}
 }
 
-
+void prodVet_x_ScalareUn(VECTOR v1, type s, VECTOR ris, int dim){	
+	for(int i =0; i<dim; i++){
+		ris[i]=v1[i]*s;
+	}
+}*/
+/*
 type prodScalare(VECTOR v1, VECTOR v2,int dim){
 	type ris=0.0;
 	for(int i =0; i<dim; i++){
@@ -251,16 +275,16 @@ type prodScalare(VECTOR v1, VECTOR v2,int dim){
 	}
 	return ris;
 }
-
-
+*/
+/*
 void subVettori(VECTOR v1,VECTOR v2, VECTOR ris, int dim){
 	for(int i =0; i<dim; i++){
 		ris[i]=v1[i]-v2[i];
 	}
-}
+}*/
 
 
-*/
+
 type funzione(VECTOR vettore,params* input,int dim){
 	type x2 = prodScalare(vettore,vettore,dim);
 	type ex2 =(type)exp(x2);
@@ -282,27 +306,93 @@ type getRand(params* input,var* vars){
 }
 
 void addMatriceVettore(MATRIX matrix,VECTOR vector,int riga,int d){
-
-	for(int i=0;i<d;i++){
-		matrix[riga*d+i]+=vector[i];
-	}
+    if((riga*d%allineamento)==0){
+        addVettori(matrix+riga*d,vector,matrix+riga*d,d);
+    }
+    else{
+        int unroll=4;
+        int i=0;
+	    for( i=0;i+unroll<d;i+=unroll){
+		    matrix[riga*d+i]+=vector[i];
+            matrix[riga*d+i+1]+=vector[i+1];
+            matrix[riga*d+i+2]+=vector[i+2];
+            matrix[riga*d+i+3]+=vector[i+3];
+	    }
+        for(;i<d;i++)
+            matrix[riga*d+i]+=vector[i];
+    }
 }
 
 void addMatriceVettoreBroad(MATRIX matrix,VECTOR vector,int d){
-	for(int pesce=0;pesce<np;pesce++)
-		for(int i=0;i<d;i++){
-			matrix[pesce*d+i]+=vector[i];
-		}
+    int unroll=4;
+    int pesce=0;    
+    for(pesce=0;pesce+unroll<np;pesce+=unroll){
+		addMatriceVettore(matrix,vector,pesce,d);
+        addMatriceVettore(matrix,vector,pesce+1,d);
+        addMatriceVettore(matrix,vector,pesce+2,d);
+        addMatriceVettore(matrix,vector,pesce+3,d);
+    }
+    for(;pesce<np;pesce++)
+        addMatriceVettore(matrix,vector,pesce,d);
+    
 }
 
-void prodTrasMatVet(MATRIX matrix,VECTOR vector, VECTOR ris, int righe,int dim){
-	for(int i=0;i<dim;i++){
+void prodTrasMatVet(MATRIX matrix,VECTOR vector, VECTOR ris, int righe,int dim){	
+    VECTOR parz=get_block(sizeof(type),d);    
+    int unroll=4;    
+    for(int i=0;i<dim;i++){
 		ris[i]=0;
 	}
-	for(int pesce=0;pesce<righe;pesce++)
-        for(int i=0;i<dim;i++)
-            ris[i]+=matrix[pesce*dim+i]*vector[pesce];
-         //moltiplicazioneVV((VECTOR) matrix+pesce*dim,vector,ris,dim);
+    int pesce=0;
+    if(allineamentoPerfetto){
+         for(pesce=0;pesce+unroll<righe;pesce+=4){
+            prodVet_x_Scalare(matrix+pesce*dim,vector[pesce],parz,dim);
+            addVettori(ris,parz,ris,dim);
+            prodVet_x_Scalare(matrix+(pesce+1)*dim,vector[pesce+1],parz,dim);
+            addVettori(ris,parz,ris,dim);
+            prodVet_x_Scalare(matrix+(pesce+2)*dim,vector[pesce+2],parz,dim);
+            addVettori(ris,parz,ris,dim);
+            prodVet_x_Scalare(matrix+(pesce+3)*dim,vector[pesce+3],parz,dim);
+            addVettori(ris,parz,ris,dim);
+        }
+    
+    }
+    else{	
+        for(pesce=0;pesce+unroll<righe;pesce+=4){
+           
+            if((pesce*dim%allineamento)==0){
+                prodVet_x_Scalare(matrix+pesce*dim,vector[pesce],parz,dim);
+                addVettori(ris,parz,ris,dim);
+                prodVet_x_ScalareUn(matrix+(pesce+1)*dim,vector[pesce+1],parz,dim);
+                addVettori(ris,parz,ris,dim);
+                prodVet_x_ScalareUn(matrix+(pesce+2)*dim,vector[pesce+2],parz,dim);
+                addVettori(ris,parz,ris,dim);
+                prodVet_x_ScalareUn(matrix+(pesce+3)*dim,vector[pesce+3],parz,dim);
+                addVettori(ris,parz,ris,dim);
+            }
+            else{
+                prodVet_x_ScalareUn(matrix+pesce*dim,vector[pesce],parz,dim);
+                addVettori(ris,parz,ris,dim);
+                 prodVet_x_ScalareUn(matrix+(pesce+1)*dim,vector[pesce+1],parz,dim);
+                addVettori(ris,parz,ris,dim);
+                 prodVet_x_ScalareUn(matrix+(pesce+2)*dim,vector[pesce+2],parz,dim);
+                addVettori(ris,parz,ris,dim);
+                 prodVet_x_ScalareUn(matrix+(pesce+3)*dim,vector[pesce+3],parz,dim);
+                addVettori(ris,parz,ris,dim);
+            }
+           
+        }
+    }
+    for(;pesce<righe;pesce++){
+        if((pesce*dim%allineamento)==0){
+            prodVet_x_Scalare(matrix+pesce*dim,vector[pesce],parz,dim);
+        }
+        else{
+            prodVet_x_ScalareUn(matrix+pesce*dim,vector[pesce],parz,dim);
+        }
+    }
+        addVettori(ris,parz,ris,dim);
+    free_block(parz);
                
     
 }
@@ -445,6 +535,8 @@ void minimo(params* input){
 void init(params* input, var* vars){
     d=input->d;
     np=input->np;
+    if(d%allineamento==0)
+        allineamentoPerfetto=1;
     iter=input->iter;
     vars->w=get_block(sizeof(type),np);
     vars->deltax=alloc_matrix(np,d);
@@ -491,7 +583,6 @@ void fss(params* input){
     }
     minimo(input);	
 }
-
 
 int main(int argc, char** argv) {
 
@@ -692,7 +783,7 @@ int main(int argc, char** argv) {
 	}
 
 	// COMMENTARE QUESTA RIGA!
-	prova(input);
+	//prova(input);
 	//
 
 	//
